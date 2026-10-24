@@ -3,28 +3,29 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#090d16">
+  <meta name="theme-color" content="#0f172a">
   <meta name="description" content="Minimalist multi-project time tracking application with start/end interval logging.">
-  <title>Minimalist Time Tracker</title>
+  <title>Pulse &bull; Time Tracker</title>
 
   <style>
     :root {
-      --bg: #090d16;
-      --card-bg: #111726;
-      --card-hover: #172033;
-      --card-active: #1e293b;
-      --border: #1e293b;
-      --border-focus: #3b82f6;
-      --text: #f1f5f9;
-      --text-muted: #64748b;
-      --accent: #2563eb;
-      --accent-hover: #1d4ed8;
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --card-hover: #243248;
+      --card-active: #2b3952;
+      --border: #334155;
+      --border-focus: #38bdf8;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #0284c7;
+      --accent-hover: #0369a1;
+      --accent-glow: rgba(56, 189, 248, 0.15);
       --success: #10b981;
       --warning: #f59e0b;
       --danger: #ef4444;
       --radius: 8px;
       --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -46,6 +47,24 @@
       gap: 16px;
     }
 
+    /* Top Nav Back Link */
+    .top-nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+    }
+    .top-nav a {
+      color: #38bdf8;
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.15s;
+    }
+    .top-nav a:hover {
+      text-decoration: underline;
+      color: #7dd3fc;
+    }
+
     header {
       display: flex;
       justify-content: space-between;
@@ -56,8 +75,8 @@
       gap: 12px;
     }
 
-    .logo-area { display: flex; align-items: center; gap: 10px; }
-    .logo-area h1 { font-size: 1.15rem; font-weight: 600; letter-spacing: -0.02em; }
+    .logo-area { display: flex; align-items: center; gap: 12px; }
+    .logo-area h1 { font-size: 1.25rem; font-weight: 700; color: #38bdf8; letter-spacing: -0.02em; }
     
     .hotkey-hints {
       font-size: 0.75rem;
@@ -66,13 +85,13 @@
       gap: 8px;
     }
     kbd {
-      background: #1e293b;
-      border: 1px solid #334155;
+      background: #0f172a;
+      border: 1px solid var(--border);
       border-radius: 4px;
       padding: 1px 5px;
       font-family: var(--font-mono);
       font-size: 0.7rem;
-      color: #93c5fd;
+      color: #38bdf8;
     }
 
     .header-actions { display: flex; align-items: center; gap: 6px; }
@@ -86,12 +105,12 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      transition: border-color 0.15s, box-shadow 0.15s;
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
 
     .hero-banner.running {
-      border-color: #1e3a8a;
-      box-shadow: 0 0 16px rgba(37, 99, 235, 0.08);
+      border-color: #38bdf8;
+      box-shadow: 0 0 20px var(--accent-glow);
     }
 
     .hero-left { display: flex; align-items: center; gap: 12px; }
@@ -125,13 +144,13 @@
       font-family: var(--font-mono);
       font-size: 1.5rem;
       font-weight: 700;
-      color: #60a5fa;
+      color: #38bdf8;
       cursor: pointer;
       padding: 2px 6px;
       border-radius: 4px;
       transition: background 0.15s;
     }
-    .hero-clock:hover { background: #1e293b; text-decoration: underline; }
+    .hero-clock:hover { background: #0f172a; text-decoration: underline; }
 
     /* Workspace */
     .app-workspace {
@@ -202,7 +221,7 @@
     
     .project-card.active { 
       background: var(--card-active); 
-      border-color: var(--accent); 
+      border-color: #38bdf8; 
       color: #fff; 
     }
 
@@ -274,12 +293,12 @@
       user-select: none;
     }
 
-    .toggle-label input { cursor: pointer; }
+    .toggle-label input { cursor: pointer; accent-color: #38bdf8; }
 
     .input-row { display: flex; gap: 8px; }
     input[type="text"], input[type="number"] {
       flex: 1;
-      background: var(--card-bg);
+      background: #0f172a;
       border: 1px solid var(--border);
       color: var(--text);
       padding: 10px 14px;
@@ -298,20 +317,50 @@
       padding: 8px 12px;
       font-size: 0.85rem;
       font-weight: 500;
-      transition: background 0.15s;
+      transition: all 0.15s;
     }
 
-    .btn-primary { background: var(--accent); color: white; white-space: nowrap; }
+    .btn-primary { 
+      background: var(--accent); 
+      color: white; 
+      white-space: nowrap; 
+    }
     .btn-primary:hover { background: var(--accent-hover); }
-    .btn-start { background: #064e3b; color: #6ee7b7; border: 1px solid #047857; }
-    .btn-start:hover { background: #047857; color: #fff; }
-    
-    .btn-stop { background: #451a1a; color: #fca5a5; border: 1px solid #991b1b; }
-    .btn-stop:hover { background: #b91c1c; color: #fff; }
 
-    .btn-action { background: #1e293b; color: var(--text); border: 1px solid var(--border); }
-    .btn-action:hover { background: #334155; }
-    .btn-delete { background: transparent; color: #64748b; padding: 4px 8px; }
+    .btn-start { 
+      background: rgba(16, 185, 129, 0.15); 
+      color: #6ee7b7; 
+      border: 1px solid #059669; 
+    }
+    .btn-start:hover { 
+      background: #059669; 
+      color: #fff; 
+    }
+    
+    .btn-stop { 
+      background: rgba(239, 68, 68, 0.15); 
+      color: #fca5a5; 
+      border: 1px solid #dc2626; 
+    }
+    .btn-stop:hover { 
+      background: #dc2626; 
+      color: #fff; 
+    }
+
+    .btn-action { 
+      background: #0f172a; 
+      color: var(--text); 
+      border: 1px solid var(--border); 
+    }
+    .btn-action:hover { 
+      background: #334155; 
+      border-color: #475569;
+    }
+    .btn-delete { 
+      background: transparent; 
+      color: #64748b; 
+      padding: 4px 8px; 
+    }
     .btn-delete:hover { color: var(--danger); }
 
     /* Task list */
@@ -326,8 +375,11 @@
       padding: 10px 14px;
       transition: border-color 0.15s, opacity 0.15s;
     }
-    .task-item.running { border-color: #2563eb; }
-    .task-item.completed { opacity: 0.55; }
+    .task-item.running { 
+      border-color: #38bdf8; 
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.08);
+    }
+    .task-item.completed { opacity: 0.5; }
 
     .task-left {
       display: flex;
@@ -347,7 +399,7 @@
     .task-checkbox {
       width: 16px;
       height: 16px;
-      accent-color: var(--accent);
+      accent-color: #38bdf8;
       cursor: pointer;
     }
 
@@ -383,29 +435,29 @@
       cursor: pointer;
       padding: 4px 6px;
       border-radius: 4px;
-      background: rgba(255, 255, 255, 0.03);
+      background: #0f172a;
       border: 1px solid transparent;
       transition: all 0.15s;
     }
     .task-timer:hover {
-      background: #1e293b;
-      border-color: #334155;
-      color: #93c5fd;
+      background: #243248;
+      border-color: #38bdf8;
+      color: #38bdf8;
     }
 
     /* Duration Modal */
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.75);
+      background: rgba(15, 23, 42, 0.8);
       display: flex;
       justify-content: center;
       align-items: center;
       z-index: 100;
-      backdrop-filter: blur(2px);
+      backdrop-filter: blur(4px);
     }
     .modal-card {
-      background: #111726;
+      background: #1e293b;
       border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 24px;
@@ -416,7 +468,7 @@
       box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
     }
 
-    .modal-title { font-size: 1rem; font-weight: 600; }
+    .modal-title { font-size: 1rem; font-weight: 600; color: #f8fafc; }
     .modal-subtitle { font-size: 0.8rem; color: var(--text-muted); margin-top: -8px; }
 
     .time-inputs { display: flex; gap: 8px; align-items: center; }
@@ -427,7 +479,7 @@
     .quick-adjust-group { display: flex; gap: 6px; }
     .btn-chip {
       flex: 1;
-      background: #1e293b;
+      background: #0f172a;
       border: 1px solid var(--border);
       color: var(--text-muted);
       padding: 6px 4px;
@@ -435,7 +487,7 @@
       font-size: 0.75rem;
       font-family: var(--font-mono);
     }
-    .btn-chip:hover { background: #334155; color: var(--text); }
+    .btn-chip:hover { background: #334155; color: var(--text); border-color: #475569; }
 
     .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
     .empty-state {
@@ -450,9 +502,13 @@
 </head>
 <body>
   <div class="container">
+    <nav class="top-nav">
+      <a href="../">&larr; Back to Apps Hub</a>
+    </nav>
+
     <header>
       <div class="logo-area">
-        <h1>Minimalist Tracker</h1>
+        <h1>Pulse</h1>
         <div class="hotkey-hints">
           <span><kbd>Space</kbd> Start/Stop</span>
           <span><kbd>N</kbd> New Task</span>
@@ -488,7 +544,7 @@
       <aside class="project-panel">
         <div class="panel-header">
           <span>Projects</span>
-          <span id="project-count" style="font-family: var(--font-mono);">0</span>
+          <span id="project-count" style="font-family: var(--font-mono); color: #38bdf8;">0</span>
         </div>
 
         <form id="project-form" class="input-row">
@@ -502,7 +558,7 @@
       <!-- Tasks Panel -->
       <main class="tasks-panel">
         <div class="tasks-toolbar">
-          <span style="font-size: 0.8rem; font-weight: 600; color: #93c5fd;" id="active-project-heading">Tasks</span>
+          <span style="font-size: 0.8rem; font-weight: 600; color: #38bdf8;" id="active-project-heading">Tasks</span>
           <label class="toggle-label">
             <input type="checkbox" id="hide-completed-toggle" onchange="toggleHideCompleted(this.checked)">
             Hide completed
@@ -828,7 +884,7 @@
         heroProj.textContent = activeProj ? activeProj.name : 'Project';
         heroClock.textContent = timeStr;
         heroToggleBtn.textContent = 'Stop';
-        document.title = `(${timeStr}) ${runningTask.title} • Tracker`;
+        document.title = `(${timeStr}) ${runningTask.title} • Pulse`;
       } else {
         heroPulse.classList.remove('active');
         heroBanner.classList.remove('running');
@@ -836,7 +892,7 @@
         heroProj.textContent = 'No active timer';
         heroClock.textContent = '00:00:00';
         heroToggleBtn.textContent = 'Start';
-        document.title = 'Minimalist Time Tracker';
+        document.title = 'Pulse • Time Tracker';
       }
 
       state.tasks.forEach(t => {
@@ -1128,7 +1184,7 @@
           csv += `"${pName}","${t.title}","In Progress","${d.toLocaleDateString()}","${formatClockTime(d)}","Running","${formatTime(sliceSecs)}",${sliceSecs}\n`;
         }
 
-        // Clean export fallback for legacy tasks (your 3 days of work without raw intervals)
+        // Clean export fallback for legacy tasks
         if ((!t.intervals || t.intervals.length === 0) && !t.isRunning) {
           const totalSecs = t.accumulatedSeconds || 0;
           csv += `"${pName}","${t.title}","${status}","${new Date().toLocaleDateString()}","--","--","${formatTime(totalSecs)}",${totalSecs}\n`;
