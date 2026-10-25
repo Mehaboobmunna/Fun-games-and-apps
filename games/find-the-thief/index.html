@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crown & Conclave - Find the Thief (v1.4.2)</title>
+    <title>Crown & Conclave - Find the Thief (v1.5.1)</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -24,7 +24,7 @@
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <!-- Babel for JSX -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -79,9 +79,9 @@
 
     <!-- Main React Application -->
     <script type="text/babel">
-        const { useState, useEffect, useRef } = React;
+        const { useState, useEffect } = React;
 
-        const APP_VERSION = "v1.4.2";
+        const APP_VERSION = "v1.5.1";
         const BUILD_DATE = "2026-10-25";
 
         const EXTRA_MIDDLE_ROLES = [
@@ -745,6 +745,8 @@
                      !(roomData.stepExcludedIds || []).includes(p.id)
             ).length : 0;
 
+            const isLobby = roomData.status === 'LOBBY';
+
             return (
                 <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
                     <header className="bg-slate-900/90 border-b border-slate-800 px-4 py-3 sticky top-0 z-30 backdrop-blur-md">
@@ -788,7 +790,8 @@
 
                     <main className="max-w-7xl w-full mx-auto flex-1 p-4 md:p-6 grid lg:grid-cols-12 gap-6">
                         <div className="lg:col-span-8 space-y-6">
-                            {roomData.status === 'LOBBY' && (
+                            {/* LOBBY VIEW CONTAINER */}
+                            <div className={`space-y-6 ${!isLobby ? 'hidden' : ''}`}>
                                 <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 space-y-6 shadow-xl">
                                     <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-4">
                                         <div>
@@ -862,257 +865,255 @@
                                         </div>
                                     )}
                                 </div>
-                            )}
+                            </div>
 
-                            {(roomData.status === 'PLAYING' || roomData.status === 'ROUND_END') && (
-                                <div className="space-y-6">
-                                    <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-4 sm:p-5 shadow-xl space-y-4">
-                                        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
-                                            <div className="flex items-center gap-2">
-                                                <span className="font-bold uppercase tracking-wider text-slate-200">Royal Deduction Progress</span>
-                                                <span className="px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold">{progressPercent}%</span>
-                                            </div>
-                                            <span>Step {Math.min(roomData.currentStep + 1, hierarchy.length - 1)} of {hierarchy.length - 1}</span>
+                            {/* GAMEPLAY VIEW CONTAINER */}
+                            <div className={`space-y-6 ${isLobby ? 'hidden' : ''}`}>
+                                <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-4 sm:p-5 shadow-xl space-y-4">
+                                    <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-bold uppercase tracking-wider text-slate-200">Royal Deduction Progress</span>
+                                            <span className="px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 font-bold">{progressPercent}%</span>
                                         </div>
-
-                                        <div className="w-full h-2.5 bg-slate-950 rounded-full overflow-hidden border border-slate-800 relative">
-                                            <div className="h-full bg-gradient-to-r from-amber-400 via-pink-500 to-emerald-400 transition-all duration-700 ease-out relative overflow-hidden" style={{ width: `${progressPercent}%` }}>
-                                                <div className="absolute inset-0 w-1/2 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
-                                            </div>
-                                        </div>
-
-                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
-                                            <div className="p-2.5 rounded-2xl bg-amber-950/30 border border-amber-500/30 flex items-center gap-2.5">
-                                                <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
-                                                    <i data-lucide="brain" className={`w-4 h-4 ${roomData.status === 'PLAYING' ? 'animate-pulse' : ''}`}></i>
-                                                </div>
-                                                <div className="min-w-0">
-                                                    <div className="text-[10px] uppercase tracking-wider text-amber-300/80 font-bold">{roomData.status === 'PLAYING' ? 'Thinking Now' : 'Round Status'}</div>
-                                                    <div className="text-xs font-extrabold text-white truncate">{roomData.status === 'PLAYING' ? currentSeekerPlayer?.name || 'Seeker' : 'All Resolved'}</div>
-                                                </div>
-                                            </div>
-
-                                            <div className="p-2.5 rounded-2xl bg-pink-950/30 border border-pink-500/30 flex items-center gap-2.5">
-                                                <div className="w-8 h-8 rounded-xl bg-pink-500/20 text-pink-400 flex items-center justify-center shrink-0">
-                                                    <i data-lucide="search" className="w-4 h-4"></i>
-                                                </div>
-                                                <div>
-                                                    <div className="text-[10px] uppercase tracking-wider text-pink-300/80 font-bold">Left to Guess</div>
-                                                    <div className="text-xs font-extrabold text-white">{roomData.status === 'PLAYING' ? `${suspectsLeftCount} Suspects` : '0 Remaining'}</div>
-                                                </div>
-                                            </div>
-
-                                            <div className="p-2.5 rounded-2xl bg-emerald-950/30 border border-emerald-500/30 flex items-center gap-2.5">
-                                                <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
-                                                    <i data-lucide="lock" className="w-4 h-4"></i>
-                                                </div>
-                                                <div>
-                                                    <div className="text-[10px] uppercase tracking-wider text-emerald-300/80 font-bold">Scores Locked</div>
-                                                    <div className="text-xs font-extrabold text-white">{lockedCount} / {roomData.players.length} Players</div>
-                                                </div>
-                                            </div>
-
-                                            <div className="p-2.5 rounded-2xl bg-rose-950/30 border border-rose-500/30 flex items-center gap-2.5">
-                                                <div className="w-8 h-8 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center shrink-0">
-                                                    <i data-lucide="ban" className="w-4 h-4"></i>
-                                                </div>
-                                                <div>
-                                                    <div className="text-[10px] uppercase tracking-wider text-rose-300/80 font-bold">Ruled Out</div>
-                                                    <div className="text-xs font-extrabold text-white">{excludedCount} Players</div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
-                                            {hierarchy.map((role, idx) => {
-                                                const isCompleted = idx < roomData.currentStep || roomData.status === 'ROUND_END';
-                                                const isCurrentSeeker = roomData.status === 'PLAYING' && idx === roomData.currentStep;
-                                                const isCurrentTarget = roomData.status === 'PLAYING' && idx === roomData.currentStep + 1;
-
-                                                return (
-                                                    <React.Fragment key={role.id}>
-                                                        <div className={`px-3 py-2 rounded-xl border text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all duration-300 ${
-                                                            isCurrentSeeker ? 'bg-amber-500 text-slate-950 border-amber-300 shadow-lg shadow-amber-500/25 scale-105' :
-                                                            isCurrentTarget ? 'bg-pink-500/20 text-pink-300 border-pink-400 animate-pulse' :
-                                                            isCompleted ? 'bg-emerald-950/70 text-emerald-300 border-emerald-500/40' :
-                                                            'bg-slate-950 text-slate-500 border-slate-800'
-                                                        }`}>
-                                                            {isCompleted ? <i data-lucide="check-circle-2" className="w-3.5 h-3.5 text-emerald-400"></i> : <RoleIcon roleId={role.id} className="w-3.5 h-3.5" />}
-                                                            <span>{role.name}</span>
-                                                            <span className="text-[10px] opacity-80">({role.pts})</span>
-                                                        </div>
-                                                        {idx < hierarchy.length - 1 && <span className={`text-xs font-bold shrink-0 ${isCompleted ? 'text-emerald-500' : 'text-slate-600'}`}>→</span>}
-                                                    </React.Fragment>
-                                                );
-                                            })}
-                                        </div>
-
-                                        <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 flex flex-wrap items-center justify-between gap-3">
-                                            <div className="flex items-center gap-3">
-                                                {roomData.status === 'PLAYING' ? (
-                                                    <div className="relative w-11 h-11 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-400 flex items-center justify-center shrink-0">
-                                                        <span className="absolute inset-0 rounded-xl border border-amber-400/50 animate-ping opacity-30" />
-                                                        <i data-lucide="eye" className="w-5 h-5"></i>
-                                                    </div>
-                                                ) : (
-                                                    <div className="w-11 h-11 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 flex items-center justify-center shrink-0">
-                                                        <i data-lucide="trophy" className="w-5 h-5 animate-bounce"></i>
-                                                    </div>
-                                                )}
-                                                <div>
-                                                    {roomData.status === 'PLAYING' && currentSeekerRole && currentTargetRole ? (
-                                                        <>
-                                                            <div className="text-sm font-bold text-white flex flex-wrap items-center gap-2">
-                                                                <span><span className="text-amber-400">{currentSeekerPlayer?.name}</span> ({currentSeekerRole.name}) is searching for the <span className="text-pink-400 underline decoration-pink-400">{currentTargetRole.name}</span></span>
-                                                            </div>
-                                                            <div className="text-xs text-slate-400 mt-0.5">
-                                                                {isMyTurnToGuess ? `👉 YOUR TURN! Select one of the ${suspectsLeftCount} eligible suspect cards below.` : `Observing ${currentSeekerPlayer?.name} evaluate suspects...`}
-                                                            </div>
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <div className="text-sm font-bold text-emerald-400">Round {roomData.round} Complete! All cards and scores are locked below.</div>
-                                                            <div className="text-xs text-slate-400">{roomData.lastAction}</div>
-                                                        </>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            {roomData.status === 'ROUND_END' && isHost && (
-                                                <button onClick={() => handleStartRound(true)} className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-extrabold text-xs shadow-lg shadow-amber-500/20 flex items-center gap-1.5 transition">
-                                                    <i data-lucide="rotate-ccw" className="w-4 h-4"></i>
-                                                    <span>Deal Next Round</span>
-                                                </button>
-                                            )}
-                                        </div>
-
-                                        {roomData.lastSwap && (
-                                            <div className={`px-4 py-2.5 rounded-xl border text-xs font-medium flex items-center gap-2 ${roomData.lastSwap.type === 'SWAP' ? 'bg-rose-950/50 border-rose-500/40 text-rose-200' : 'bg-emerald-950/50 border-emerald-500/40 text-emerald-200'}`}>
-                                                <i data-lucide="arrow-right-left" className="w-4 h-4 shrink-0"></i>
-                                                <span>{roomData.lastAction}</span>
-                                            </div>
-                                        )}
+                                        <span>Step {Math.min(roomData.currentStep + 1, hierarchy.length - 1)} of {hierarchy.length - 1}</span>
                                     </div>
 
-                                    {myPlayer && myRole && (
-                                        <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-4 sm:p-5 flex flex-wrap items-center justify-between gap-4">
-                                            <div className="flex items-center gap-4">
-                                                <div className={`w-14 h-16 rounded-2xl bg-gradient-to-br ${myRole.color} border-2 ${myRole.border} flex flex-col items-center justify-center text-white shadow-lg`}>
-                                                    <RoleIcon roleId={myRole.id} className="w-6 h-6" />
-                                                    <span className="text-[10px] font-black uppercase mt-0.5">{myRole.name}</span>
-                                                </div>
-                                                <div>
-                                                    <div className="text-xs font-semibold uppercase tracking-wider text-slate-400">Your Current Card</div>
-                                                    <div className="text-lg font-black text-white flex items-center gap-2">
-                                                        <span>{myRole.name}</span>
-                                                        <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-800 text-amber-300 border border-slate-700">Worth {myRole.pts} pts</span>
-                                                    </div>
-                                                </div>
+                                    <div className="w-full h-2.5 bg-slate-950 rounded-full overflow-hidden border border-slate-800 relative">
+                                        <div className="h-full bg-gradient-to-r from-amber-400 via-pink-500 to-emerald-400 transition-all duration-700 ease-out relative overflow-hidden" style={{ width: `${progressPercent}%` }}>
+                                            <div className="absolute inset-0 w-1/2 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
+                                        <div className="p-2.5 rounded-2xl bg-amber-950/30 border border-amber-500/30 flex items-center gap-2.5">
+                                            <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
+                                                <i data-lucide="brain" className={`w-4 h-4 ${roomData.status === 'PLAYING' ? 'animate-pulse' : ''}`}></i>
+                                            </div>
+                                            <div className="min-w-0">
+                                                <div className="text-[10px] uppercase tracking-wider text-amber-300/80 font-bold">{roomData.status === 'PLAYING' ? 'Thinking Now' : 'Round Status'}</div>
+                                                <div className="text-xs font-extrabold text-white truncate">{roomData.status === 'PLAYING' ? currentSeekerPlayer?.name || 'Seeker' : 'All Resolved'}</div>
                                             </div>
                                         </div>
-                                    )}
 
-                                    <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
-                                        {roomData.players.map((p) => {
-                                            const pRole = hierarchy.find(r => r.id === p.roleId);
-                                            const isLocked = roomData.lockedPlayerIds?.includes(p.id);
-                                            const isActiveSeeker = roomData.status === 'PLAYING' && currentSeekerPlayer?.id === p.id;
-                                            const isMe = p.id === user?.uid;
-                                            const isRoleRevealed = isMe || isLocked || isActiveSeeker || roomData.status === 'ROUND_END';
-                                            const isExcludedThisStep = roomData.status === 'PLAYING' && (roomData.stepExcludedIds || []).includes(p.id);
-                                            const isEligibleSuspect = roomData.status === 'PLAYING' && !isLocked && !isActiveSeeker && !isExcludedThisStep;
-                                            const canBeGuessed = isMyTurnToGuess && isEligibleSuspect && !isMe;
-                                            const wasJustInvolvedInSwap = roomData.lastSwap && (roomData.lastSwap.fromName === p.name || roomData.lastSwap.toName === p.name);
+                                        <div className="p-2.5 rounded-2xl bg-pink-950/30 border border-pink-500/30 flex items-center gap-2.5">
+                                            <div className="w-8 h-8 rounded-xl bg-pink-500/20 text-pink-400 flex items-center justify-center shrink-0">
+                                                <i data-lucide="search" className="w-4 h-4"></i>
+                                            </div>
+                                            <div>
+                                                <div className="text-[10px] uppercase tracking-wider text-pink-300/80 font-bold">Left to Guess</div>
+                                                <div className="text-xs font-extrabold text-white">{roomData.status === 'PLAYING' ? `${suspectsLeftCount} Suspects` : '0 Remaining'}</div>
+                                            </div>
+                                        </div>
+
+                                        <div className="p-2.5 rounded-2xl bg-emerald-950/30 border border-emerald-500/30 flex items-center gap-2.5">
+                                            <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                                                <i data-lucide="lock" className="w-4 h-4"></i>
+                                            </div>
+                                            <div>
+                                                <div className="text-[10px] uppercase tracking-wider text-emerald-300/80 font-bold">Scores Locked</div>
+                                                <div className="text-xs font-extrabold text-white">{lockedCount} / {roomData.players.length} Players</div>
+                                            </div>
+                                        </div>
+
+                                        <div className="p-2.5 rounded-2xl bg-rose-950/30 border border-rose-500/30 flex items-center gap-2.5">
+                                            <div className="w-8 h-8 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center shrink-0">
+                                                <i data-lucide="ban" className="w-4 h-4"></i>
+                                            </div>
+                                            <div>
+                                                <div className="text-[10px] uppercase tracking-wider text-rose-300/80 font-bold">Ruled Out</div>
+                                                <div className="text-xs font-extrabold text-white">{excludedCount} Players</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+                                        {hierarchy.map((role, idx) => {
+                                            const isCompleted = idx < roomData.currentStep || roomData.status === 'ROUND_END';
+                                            const isCurrentSeeker = roomData.status === 'PLAYING' && idx === roomData.currentStep;
+                                            const isCurrentTarget = roomData.status === 'PLAYING' && idx === roomData.currentStep + 1;
 
                                             return (
-                                                <div
-                                                    key={p.id}
-                                                    onClick={() => canBeGuessed && handleGuessPlayer(p.id, false)}
-                                                    className={`relative rounded-3xl p-4 border transition-all duration-300 flex flex-col justify-between min-h-[205px] overflow-hidden ${
-                                                        isActiveSeeker ? 'bg-gradient-to-b from-amber-950/60 via-slate-900 to-slate-900 border-amber-400 shadow-xl shadow-amber-500/15 ring-2 ring-amber-400/30' :
-                                                        isLocked ? 'bg-gradient-to-b from-emerald-950/35 to-slate-900/90 border-emerald-500/50 shadow-lg' :
-                                                        isExcludedThisStep ? 'bg-slate-950/60 border-rose-500/30 opacity-60 cursor-not-allowed' :
-                                                        canBeGuessed ? 'bg-slate-900 hover:bg-slate-800/95 border-pink-500/50 hover:border-pink-400 cursor-pointer hover:-translate-y-1.5 shadow-lg shadow-pink-500/10' :
-                                                        'bg-slate-900/90 border-slate-800'
-                                                    }`}
-                                                >
-                                                    <div className="flex items-start justify-between gap-2 relative z-10">
-                                                        <div>
-                                                            <div className="font-bold text-sm text-white flex items-center gap-1.5 flex-wrap">
-                                                                <span>{p.name}</span>
-                                                                {isMe && <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">You</span>}
-                                                                {p.isBot && <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-700/40">AI</span>}
-                                                            </div>
-                                                            <div className="text-xs text-slate-400 font-semibold mt-0.5 flex items-center gap-1.5">
-                                                                <span>Score:</span>
-                                                                <span className="text-amber-300 font-mono font-bold">{p.score || 0} pts</span>
-                                                            </div>
-                                                        </div>
-
-                                                        {isLocked && (
-                                                            <span className="px-2.5 py-1 rounded-xl bg-emerald-950 border border-emerald-500/50 text-emerald-300 text-[10px] font-extrabold flex items-center gap-1">
-                                                                <i data-lucide="check-circle-2" className="w-3 h-3 text-emerald-400"></i>
-                                                                <span>Locked</span>
-                                                            </span>
-                                                        )}
-                                                        {isActiveSeeker && (
-                                                            <span className="px-2.5 py-1 rounded-xl bg-amber-400 text-slate-950 text-[10px] font-black uppercase flex items-center gap-1">
-                                                                <i data-lucide="brain" className="w-3 h-3 animate-spin"></i>
-                                                                <span>Thinking</span>
-                                                            </span>
-                                                        )}
-                                                        {!isLocked && !isActiveSeeker && isExcludedThisStep && (
-                                                            <span className="px-2 py-1 rounded-xl bg-rose-950/90 border border-rose-500/40 text-rose-300 text-[10px] font-bold flex items-center gap-1">
-                                                                <i data-lucide="ban" className="w-3 h-3"></i>
-                                                                <span>Ruled Out</span>
-                                                            </span>
-                                                        )}
+                                                <React.Fragment key={role.id}>
+                                                    <div className={`px-3 py-2 rounded-xl border text-xs font-bold flex items-center gap-1.5 shrink-0 transition-all duration-300 ${
+                                                        isCurrentSeeker ? 'bg-amber-500 text-slate-950 border-amber-300 shadow-lg shadow-amber-500/25 scale-105' :
+                                                        isCurrentTarget ? 'bg-pink-500/20 text-pink-300 border-pink-400 animate-pulse' :
+                                                        isCompleted ? 'bg-emerald-950/70 text-emerald-300 border-emerald-500/40' :
+                                                        'bg-slate-950 text-slate-500 border-slate-800'
+                                                    }`}>
+                                                        {isCompleted ? <i data-lucide="check-circle-2" className="w-3.5 h-3.5 text-emerald-400"></i> : <RoleIcon roleId={role.id} className="w-3.5 h-3.5" />}
+                                                        <span>{role.name}</span>
+                                                        <span className="text-[10px] opacity-80">({role.pts})</span>
                                                     </div>
-
-                                                    <div className="my-3 flex items-center justify-center relative z-10">
-                                                        {isRoleRevealed && pRole ? (
-                                                            <div className={`w-full py-3 px-4 rounded-2xl bg-gradient-to-r ${pRole.color} border ${pRole.border} text-white flex items-center justify-between shadow-inner relative overflow-hidden`}>
-                                                                <div className="flex items-center gap-2.5">
-                                                                    <RoleIcon roleId={pRole.id} className="w-6 h-6" />
-                                                                    <div>
-                                                                        <div className="font-black text-sm tracking-wide uppercase">{pRole.name}</div>
-                                                                        <div className="text-[11px] opacity-90">{pRole.pts} Points</div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        ) : (
-                                                            <div className={`w-full py-3.5 px-4 rounded-2xl bg-slate-950 border flex items-center justify-between text-slate-400 ${canBeGuessed ? 'border-pink-500/40 bg-pink-950/10' : 'border-slate-800'}`}>
-                                                                <div className="flex items-center gap-2.5">
-                                                                    <div className={`w-8 h-8 rounded-xl border flex items-center justify-center font-bold ${isEligibleSuspect ? 'bg-pink-500/15 border-pink-500/40 text-pink-300 animate-pulse' : 'bg-slate-900 border-slate-800 text-slate-500'}`}>?</div>
-                                                                    <div>
-                                                                        <div className="font-bold text-xs text-slate-200">{isEligibleSuspect ? 'Unrevealed Suspect' : 'Hidden Card'}</div>
-                                                                        <div className="text-[11px] text-slate-500">{isExcludedThisStep ? 'Ruled out' : 'Suspect'}</div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        )}
-                                                    </div>
-
-                                                    <div className="relative z-10">
-                                                        {canBeGuessed ? (
-                                                            <button type="button" className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-400 hover:to-rose-400 text-slate-950 font-extrabold text-xs transition flex items-center justify-center gap-1.5 shadow-lg">
-                                                                <i data-lucide="sparkle" className="w-3.5 h-3.5 fill-current"></i>
-                                                                <span>Guess as {currentTargetRole?.name}</span>
-                                                            </button>
-                                                        ) : isExcludedThisStep ? (
-                                                            <div className="text-center text-[11px] text-rose-400 font-semibold py-1">Proven Not {currentTargetRole?.name}</div>
-                                                        ) : isLocked ? (
-                                                            <div className="text-center text-[11px] text-emerald-400 font-semibold py-1">Locked as {pRole?.name}</div>
-                                                        ) : (
-                                                            <div className="text-center text-[11px] text-slate-400 py-1">Waiting in court</div>
-                                                        )}
-                                                    </div>
-                                                </div>
+                                                    {idx < hierarchy.length - 1 && <span className={`text-xs font-bold shrink-0 ${isCompleted ? 'text-emerald-500' : 'text-slate-600'}`}>→</span>}
+                                                </React.Fragment>
                                             );
                                         })}
                                     </div>
+
+                                    <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 flex flex-wrap items-center justify-between gap-3">
+                                        <div className="flex items-center gap-3">
+                                            {roomData.status === 'PLAYING' ? (
+                                                <div className="relative w-11 h-11 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-400 flex items-center justify-center shrink-0">
+                                                    <span className="absolute inset-0 rounded-xl border border-amber-400/50 animate-ping opacity-30" />
+                                                    <i data-lucide="eye" className="w-5 h-5"></i>
+                                                </div>
+                                            ) : (
+                                                <div className="w-11 h-11 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 flex items-center justify-center shrink-0">
+                                                    <i data-lucide="trophy" className="w-5 h-5 animate-bounce"></i>
+                                                </div>
+                                            )}
+                                            <div>
+                                                {roomData.status === 'PLAYING' && currentSeekerRole && currentTargetRole ? (
+                                                    <>
+                                                        <div className="text-sm font-bold text-white flex flex-wrap items-center gap-2">
+                                                            <span><span className="text-amber-400">{currentSeekerPlayer?.name}</span> ({currentSeekerRole.name}) is searching for the <span className="text-pink-400 underline decoration-pink-400">{currentTargetRole.name}</span></span>
+                                                        </div>
+                                                        <div className="text-xs text-slate-400 mt-0.5">
+                                                            {isMyTurnToGuess ? `👉 YOUR TURN! Select one of the ${suspectsLeftCount} eligible suspect cards below.` : `Observing ${currentSeekerPlayer?.name} evaluate suspects...`}
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <div className="text-sm font-bold text-emerald-400">Round {roomData.round} Complete! All cards and scores are locked below.</div>
+                                                        <div className="text-xs text-slate-400">{roomData.lastAction}</div>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {roomData.status === 'ROUND_END' && isHost && (
+                                            <button onClick={() => handleStartRound(true)} className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-extrabold text-xs shadow-lg shadow-amber-500/20 flex items-center gap-1.5 transition">
+                                                <i data-lucide="rotate-ccw" className="w-4 h-4"></i>
+                                                <span>Deal Next Round</span>
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    {roomData.lastSwap && (
+                                        <div className={`px-4 py-2.5 rounded-xl border text-xs font-medium flex items-center gap-2 ${roomData.lastSwap.type === 'SWAP' ? 'bg-rose-950/50 border-rose-500/40 text-rose-200' : 'bg-emerald-950/50 border-emerald-500/40 text-emerald-200'}`}>
+                                            <i data-lucide="arrow-right-left" className="w-4 h-4 shrink-0"></i>
+                                            <span>{roomData.lastAction}</span>
+                                        </div>
+                                    )}
                                 </div>
-                            )}
+
+                                {myPlayer && myRole && (
+                                    <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-4 sm:p-5 flex flex-wrap items-center justify-between gap-4">
+                                        <div className="flex items-center gap-4">
+                                            <div className={`w-14 h-16 rounded-2xl bg-gradient-to-br ${myRole.color} border-2 ${myRole.border} flex flex-col items-center justify-center text-white shadow-lg`}>
+                                                <RoleIcon roleId={myRole.id} className="w-6 h-6" />
+                                                <span className="text-[10px] font-black uppercase mt-0.5">{myRole.name}</span>
+                                            </div>
+                                            <div>
+                                                <div className="text-xs font-semibold uppercase tracking-wider text-slate-400">Your Current Card</div>
+                                                <div className="text-lg font-black text-white flex items-center gap-2">
+                                                    <span>{myRole.name}</span>
+                                                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-800 text-amber-300 border border-slate-700">Worth {myRole.pts} pts</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
+                                    {roomData.players.map((p) => {
+                                        const pRole = hierarchy.find(r => r.id === p.roleId);
+                                        const isLocked = roomData.lockedPlayerIds?.includes(p.id);
+                                        const isActiveSeeker = roomData.status === 'PLAYING' && currentSeekerPlayer?.id === p.id;
+                                        const isMe = p.id === user?.uid;
+                                        const isRoleRevealed = isMe || isLocked || isActiveSeeker || roomData.status === 'ROUND_END';
+                                        const isExcludedThisStep = roomData.status === 'PLAYING' && (roomData.stepExcludedIds || []).includes(p.id);
+                                        const isEligibleSuspect = roomData.status === 'PLAYING' && !isLocked && !isActiveSeeker && !isExcludedThisStep;
+                                        const canBeGuessed = isMyTurnToGuess && isEligibleSuspect && !isMe;
+
+                                        return (
+                                            <div
+                                                key={p.id}
+                                                onClick={() => canBeGuessed && handleGuessPlayer(p.id, false)}
+                                                className={`relative rounded-3xl p-4 border transition-all duration-300 flex flex-col justify-between min-h-[205px] overflow-hidden ${
+                                                    isActiveSeeker ? 'bg-gradient-to-b from-amber-950/60 via-slate-900 to-slate-900 border-amber-400 shadow-xl shadow-amber-500/15 ring-2 ring-amber-400/30' :
+                                                    isLocked ? 'bg-gradient-to-b from-emerald-950/35 to-slate-900/90 border-emerald-500/50 shadow-lg' :
+                                                    isExcludedThisStep ? 'bg-slate-950/60 border-rose-500/30 opacity-60 cursor-not-allowed' :
+                                                    canBeGuessed ? 'bg-slate-900 hover:bg-slate-800/95 border-pink-500/50 hover:border-pink-400 cursor-pointer hover:-translate-y-1.5 shadow-lg shadow-pink-500/10' :
+                                                    'bg-slate-900/90 border-slate-800'
+                                                }`}
+                                            >
+                                                <div className="flex items-start justify-between gap-2 relative z-10">
+                                                    <div>
+                                                        <div className="font-bold text-sm text-white flex items-center gap-1.5 flex-wrap">
+                                                            <span>{p.name}</span>
+                                                            {isMe && <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">You</span>}
+                                                            {p.isBot && <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-950 text-indigo-300 border border-indigo-700/40">AI</span>}
+                                                        </div>
+                                                        <div className="text-xs text-slate-400 font-semibold mt-0.5 flex items-center gap-1.5">
+                                                            <span>Score:</span>
+                                                            <span className="text-amber-300 font-mono font-bold">{p.score || 0} pts</span>
+                                                        </div>
+                                                    </div>
+
+                                                    {isLocked && (
+                                                        <span className="px-2.5 py-1 rounded-xl bg-emerald-950 border border-emerald-500/50 text-emerald-300 text-[10px] font-extrabold flex items-center gap-1">
+                                                            <i data-lucide="check-circle-2" className="w-3 h-3 text-emerald-400"></i>
+                                                            <span>Locked</span>
+                                                        </span>
+                                                    )}
+                                                    {isActiveSeeker && (
+                                                        <span className="px-2.5 py-1 rounded-xl bg-amber-400 text-slate-950 text-[10px] font-black uppercase flex items-center gap-1">
+                                                            <i data-lucide="brain" className="w-3 h-3 animate-spin"></i>
+                                                            <span>Thinking</span>
+                                                        </span>
+                                                    )}
+                                                    {!isLocked && !isActiveSeeker && isExcludedThisStep && (
+                                                        <span className="px-2.5 py-1 rounded-xl bg-rose-950/90 border border-rose-500/40 text-rose-300 text-[10px] font-bold flex items-center gap-1">
+                                                            <i data-lucide="ban" className="w-3 h-3"></i>
+                                                            <span>Ruled Out</span>
+                                                        </span>
+                                                    )}
+                                                </div>
+
+                                                <div className="my-3 flex items-center justify-center relative z-10">
+                                                    {isRoleRevealed && pRole ? (
+                                                        <div className={`w-full py-3 px-4 rounded-2xl bg-gradient-to-r ${pRole.color} border ${pRole.border} text-white flex items-center justify-between shadow-inner relative overflow-hidden`}>
+                                                            <div className="flex items-center gap-2.5">
+                                                                <RoleIcon roleId={pRole.id} className="w-6 h-6" />
+                                                                <div>
+                                                                    <div className="font-black text-sm tracking-wide uppercase">{pRole.name}</div>
+                                                                    <div className="text-[11px] opacity-90">{pRole.pts} Points</div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div className={`w-full py-3.5 px-4 rounded-2xl bg-slate-950 border flex items-center justify-between text-slate-400 ${canBeGuessed ? 'border-pink-500/40 bg-pink-950/10' : 'border-slate-800'}`}>
+                                                            <div className="flex items-center gap-2.5">
+                                                                <div className={`w-8 h-8 rounded-xl border flex items-center justify-center font-bold ${isEligibleSuspect ? 'bg-pink-500/15 border-pink-500/40 text-pink-300 animate-pulse' : 'bg-slate-900 border-slate-800 text-slate-500'}`}>?</div>
+                                                                <div>
+                                                                    <div className="font-bold text-xs text-slate-200">{isEligibleSuspect ? 'Unrevealed Suspect' : 'Hidden Card'}</div>
+                                                                    <div className="text-[11px] text-slate-500">{isExcludedThisStep ? 'Ruled out' : 'Suspect'}</div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                <div className="relative z-10">
+                                                    {canBeGuessed ? (
+                                                        <button type="button" className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-400 hover:to-rose-400 text-slate-950 font-extrabold text-xs transition flex items-center justify-center gap-1.5 shadow-lg">
+                                                            <i data-lucide="sparkle" className="w-3.5 h-3.5 fill-current"></i>
+                                                            <span>Guess as {currentTargetRole?.name}</span>
+                                                        </button>
+                                                    ) : isExcludedThisStep ? (
+                                                        <div className="text-center text-[11px] text-rose-400 font-semibold py-1">Proven Not {currentTargetRole?.name}</div>
+                                                    ) : isLocked ? (
+                                                        <div className="text-center text-[11px] text-emerald-400 font-semibold py-1">Locked as {pRole?.name}</div>
+                                                    ) : (
+                                                        <div className="text-center text-[11px] text-slate-400 py-1">Waiting in court</div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
                         </div>
 
                         <div className="lg:col-span-4 space-y-6">
