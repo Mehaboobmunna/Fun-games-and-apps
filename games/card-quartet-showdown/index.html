@@ -1,0 +1,2331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Card Quartet Showdown</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap');
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .card-hover-lift {
+      transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.22s ease;
+    }
+    .card-hover-lift:hover {
+      transform: translateY(-8px) scale(1.02);
+      box-shadow: 0 16px 30px -10px rgba(0, 0, 0, 0.5);
+    }
+
+    .active-turn-ring {
+      box-shadow: 0 0 0 3px #f59e0b, 0 0 20px 4px rgba(245, 158, 11, 0.4);
+      animation: pulseGlow 1.8s infinite alternate;
+    }
+
+    @keyframes pulseGlow {
+      0% { box-shadow: 0 0 0 3px #f59e0b, 0 0 12px 2px rgba(245, 158, 11, 0.3); }
+      100% { box-shadow: 0 0 0 4px #fbbf24, 0 0 24px 6px rgba(245, 158, 11, 0.6); }
+    }
+
+    .pass-flight-anim {
+      transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    /* Stacked card layered visual depth */
+    .card-stack-container {
+      position: relative;
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .card-stack-container:hover {
+      transform: translateY(-4px);
+    }
+
+    /* Individual layered card in a stack */
+    .stack-sub-card {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 1rem;
+      border-width: 2px;
+      transition: all 0.25s ease;
+      pointer-events: none;
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.6);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(52, 211, 153, 0.3);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(52, 211, 153, 0.6);
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between overflow-x-hidden">
+
+  <!-- ================= HEADER BAR ================= -->
+  <header class="w-full bg-slate-900/90 border-b border-emerald-900/40 backdrop-blur-md px-4 py-3 sticky top-0 z-40 flex items-center justify-between">
+    <!-- Brand / Title -->
+    <div class="flex items-center space-x-2">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/20 text-slate-950 font-black text-lg">
+        🂠
+      </div>
+      <div>
+        <h1 class="text-sm sm:text-base font-extrabold tracking-wide bg-gradient-to-r from-emerald-300 via-teal-200 to-amber-200 bg-clip-text text-transparent">
+          Card Quartet Showdown
+        </h1>
+        <p class="text-[10px] text-emerald-400/80 font-medium tracking-wider uppercase">
+          4-of-a-Kind Fast Passing
+        </p>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="flex items-center space-x-2">
+      <!-- Multiplayer Online Lobby Button -->
+      <button id="onlineLobbyHeaderBtn" class="px-2.5 py-1.5 rounded-lg bg-emerald-950/80 hover:bg-emerald-900 text-xs font-semibold flex items-center gap-1.5 transition text-emerald-300 border border-emerald-600/50 shadow-sm" title="Play online with friends across devices">
+        <i data-lucide="globe" class="w-4 h-4 text-emerald-400"></i>
+        <span class="hidden sm:inline">Online Rooms</span>
+      </button>
+
+      <!-- Card Vault (Cached Decks) -->
+      <button id="cardVaultHeaderBtn" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold flex items-center gap-1.5 transition text-amber-300 border border-slate-700" title="View pre-generated cached card vault">
+        <i data-lucide="archive" class="w-4 h-4 text-amber-400"></i>
+        <span class="hidden md:inline">Vault</span>
+      </button>
+
+      <!-- Theme Switcher -->
+      <button id="themeSwitcherHeaderBtn" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold flex items-center gap-1.5 transition text-emerald-300 border border-slate-700">
+        <i data-lucide="palette" class="w-4 h-4 text-emerald-400"></i>
+        <span id="currentThemeLabel" class="hidden sm:inline">Animals</span>
+      </button>
+
+      <!-- Rules Button -->
+      <button id="rulesHeaderBtn" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold flex items-center gap-1.5 transition text-slate-300 border border-slate-700">
+        <i data-lucide="help-circle" class="w-4 h-4 text-amber-400"></i>
+        <span class="hidden sm:inline">Rules</span>
+      </button>
+
+      <!-- New Game / Setup Button -->
+      <button id="newGameHeaderBtn" class="px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition shadow-md shadow-emerald-500/20">
+        <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+        <span>New Game</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ================= MAIN GAME ARENA ================= -->
+  <main class="flex-1 max-w-6xl w-full mx-auto p-3 sm:p-5 flex flex-col justify-between gap-4">
+
+    <!-- Top Status / Turn Banner -->
+    <div id="gameStatusBanner" class="w-full bg-slate-900/80 border border-emerald-800/40 rounded-2xl p-3 flex flex-wrap items-center justify-between gap-3 shadow-lg">
+      <div class="flex items-center space-x-3">
+        <div id="dealerBadge" class="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold">
+          Dealer: P1
+        </div>
+        <div id="turnIndicator" class="text-xs sm:text-sm font-semibold text-emerald-300 flex items-center gap-1.5">
+          <span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping"></span>
+          <span id="turnText">Preparing table...</span>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-4 text-xs font-medium">
+        <span class="text-slate-400">Round <strong id="roundNumberDisplay" class="text-white">1</strong></span>
+        <button id="viewScoresBtn" class="text-emerald-400 hover:text-emerald-300 underline font-semibold cursor-pointer">
+          Scoreboard
+        </button>
+      </div>
+    </div>
+
+    <!-- Opponents Row -->
+    <div class="w-full">
+      <div class="flex items-center justify-between mb-1.5 px-1">
+        <span class="text-[11px] font-bold tracking-wider text-slate-400 uppercase">Opponents at Table</span>
+        <span class="text-[10px] text-emerald-400/80 font-mono">Passing Direction: ➔ Clockwise</span>
+      </div>
+      <div id="opponentsArea" class="flex flex-wrap items-center justify-center gap-2 sm:gap-3 py-1">
+        <!-- Dynamic Opponent Cards injected here -->
+      </div>
+    </div>
+
+    <!-- Table Passing Centerpiece (Streamlined Compact Bar) -->
+    <div class="relative w-full rounded-2xl bg-gradient-to-r from-slate-900/90 via-emerald-950/40 to-slate-900/90 border border-emerald-900/50 px-3 sm:px-4 py-2 sm:py-2.5 flex items-center justify-between min-h-[60px] sm:min-h-[68px] shadow-inner overflow-hidden gap-3">
+      <!-- Decorative Table Ring -->
+      <div class="absolute inset-0 border border-emerald-500/10 rounded-2xl pointer-events-none"></div>
+
+      <!-- Action Status Text in Center/Left -->
+      <div class="z-10 flex flex-col justify-center min-w-0 flex-1">
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0"></span>
+          <div id="centerActionPrompt" class="text-xs sm:text-sm font-bold text-slate-100 truncate">
+            Loading game...
+          </div>
+        </div>
+        <div id="centerSubPrompt" class="text-[10px] sm:text-xs text-slate-400 truncate pl-4">
+          Collect 4 identical cards to win 100 pts!
+        </div>
+      </div>
+
+      <!-- Pass Card Button for Active Player -->
+      <div id="passActionContainer" class="z-10 shrink-0 hidden">
+        <button id="passSelectedCardBtn" disabled class="px-3.5 sm:px-5 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 disabled:opacity-40 disabled:cursor-not-allowed text-slate-950 font-black text-xs sm:text-sm tracking-wide shadow-md shadow-amber-500/20 flex items-center gap-1.5 sm:gap-2 transition transform active:scale-95">
+          <span>Pass Unwanted</span>
+          <i data-lucide="arrow-right" class="w-3.5 h-3.5 sm:w-4 sm:h-4"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Player Area (Bottom) - Guaranteed Single Row Horizontal Layout -->
+    <div class="w-full bg-slate-900/70 border border-emerald-800/50 rounded-2xl sm:rounded-3xl p-2.5 sm:p-4 shadow-2xl backdrop-blur-sm flex flex-col justify-between">
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-1.5 sm:mb-2 px-1">
+        <div class="flex items-center space-x-2">
+          <div class="w-6 h-6 rounded-lg bg-amber-400/20 text-amber-300 border border-amber-400/30 flex items-center justify-center font-bold text-xs">
+            ★
+          </div>
+          <div>
+            <h2 id="currentPlayerName" class="text-xs sm:text-sm font-black text-white flex items-center gap-2">
+              Your Hand
+            </h2>
+            <p id="handInstructionText" class="text-[10px] sm:text-[11px] text-slate-400">
+              Select 1 card stack, then click Pass.
+            </p>
+          </div>
+        </div>
+
+        <!-- Matching tracker badge -->
+        <div id="matchProgressBadge" class="px-2 py-0.5 sm:py-1 rounded-lg bg-emerald-950/80 border border-emerald-600/40 text-[11px] font-semibold text-emerald-300 flex items-center gap-1">
+          <span>Best match:</span>
+          <strong id="bestMatchCount" class="text-amber-400 font-extrabold text-xs sm:text-sm">1/4</strong>
+        </div>
+      </div>
+
+      <!-- Cards in Hand Container (Strictly Single Row) -->
+      <div id="playerHandContainer" class="flex flex-nowrap items-center justify-start sm:justify-center gap-2 sm:gap-4 py-2 sm:py-3 overflow-x-auto overflow-y-visible px-2 scroll-smooth">
+        <!-- Dynamic Cards rendered here in 1 row -->
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Pass Flight Animation Overlay -->
+  <div id="passFlightOverlay" class="fixed inset-0 pointer-events-none z-50 flex items-center justify-center hidden">
+    <div id="flightCard" class="pass-flight-anim transform scale-110 shadow-2xl">
+      <!-- Content populated during pass -->
+    </div>
+  </div>
+
+  <!-- Pass & Play Handover Screen Modal -->
+  <div id="passAndPlayModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md hidden">
+    <div class="bg-slate-900 border border-emerald-500/50 rounded-3xl p-6 sm:p-8 max-w-sm w-full text-center shadow-2xl space-y-4">
+      <div class="w-16 h-16 mx-auto rounded-2xl bg-amber-400/20 border border-amber-400/40 flex items-center justify-center text-3xl">
+        🤫
+      </div>
+      <h3 class="text-xl font-black text-white">Pass The Device</h3>
+      <p class="text-xs text-slate-300">
+        Please hand the device to <strong id="nextTurnPlayerName" class="text-amber-400 text-sm">Player</strong> to keep cards secret!
+      </p>
+      <div class="pt-2">
+        <button id="readyRevealHandBtn" class="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-sm tracking-wide shadow-lg shadow-emerald-500/20 transition">
+          I am Ready — Show My Hand
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Setup / New Game Modal -->
+  <div id="setupModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+    <div class="bg-slate-900 border border-emerald-500/40 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-5">
+      <div class="flex items-center space-x-3 pb-3 border-b border-emerald-900/60">
+        <div class="p-2 rounded-xl bg-emerald-500/20 text-emerald-300 text-xl font-bold">
+          🂠
+        </div>
+        <div>
+          <h2 class="text-lg font-black text-white">Game Setup</h2>
+          <p class="text-xs text-slate-400">Configure players & themes</p>
+        </div>
+      </div>
+
+      <div class="space-y-4">
+        <!-- Number of Players -->
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">Number of Players (3 to 6)</label>
+          <div class="grid grid-cols-4 gap-2">
+            <button type="button" data-players="3" class="player-count-btn py-2 rounded-xl border border-slate-700 bg-slate-800 text-xs font-bold hover:border-emerald-500 transition">3</button>
+            <button type="button" data-players="4" class="player-count-btn py-2 rounded-xl border border-emerald-500 bg-emerald-500/20 text-emerald-300 text-xs font-bold transition">4</button>
+            <button type="button" data-players="5" class="player-count-btn py-2 rounded-xl border border-slate-700 bg-slate-800 text-xs font-bold hover:border-emerald-500 transition">5</button>
+            <button type="button" data-players="6" class="player-count-btn py-2 rounded-xl border border-slate-700 bg-slate-800 text-xs font-bold hover:border-emerald-500 transition">6</button>
+          </div>
+        </div>
+
+        <!-- Mode: Solo vs Bots OR Pass & Play OR Online -->
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">Play Style</label>
+          <div class="grid grid-cols-3 gap-2">
+            <label class="flex items-center gap-2 p-2.5 rounded-xl border border-emerald-700/50 bg-emerald-950/40 cursor-pointer hover:border-emerald-500 transition">
+              <input type="radio" name="playMode" value="bots" checked class="accent-amber-400">
+              <div>
+                <div class="text-xs font-bold text-white">vs Bots</div>
+                <div class="text-[9px] text-slate-400">Solo</div>
+              </div>
+            </label>
+            <label class="flex items-center gap-2 p-2.5 rounded-xl border border-emerald-700/50 bg-emerald-950/40 cursor-pointer hover:border-emerald-500 transition">
+              <input type="radio" name="playMode" value="passplay" class="accent-amber-400">
+              <div>
+                <div class="text-xs font-bold text-white">Pass & Play</div>
+                <div class="text-[9px] text-slate-400">1 Device</div>
+              </div>
+            </label>
+            <label id="onlineRadioLabel" class="flex items-center gap-2 p-2.5 rounded-xl border border-emerald-700/50 bg-emerald-950/40 cursor-pointer hover:border-emerald-500 transition">
+              <input type="radio" name="playMode" value="online" class="accent-amber-400">
+              <div>
+                <div class="text-xs font-bold text-emerald-300">Online</div>
+                <div class="text-[9px] text-slate-400">Multiplayer</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Bot Speed (if bots selected) -->
+        <div id="botSpeedContainer">
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Bot Passing Speed</label>
+          <select id="botSpeedSelect" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
+            <option value="1400">Relaxed (1.4s)</option>
+            <option value="900" selected>Normal (0.9s)</option>
+            <option value="450">Fast (0.45s)</option>
+          </select>
+        </div>
+
+        <!-- Card Theme -->
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Card Theme (14 Themes)</label>
+          <select id="cardThemeSelect" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
+            <option value="superheroes">🦸‍♂️ Superheroes</option>
+            <option value="mythology">🐉 Mythical Creatures</option>
+            <option value="landmarks">🏛️ World Landmarks</option>
+            <option value="ocean">🌊 Ocean Life</option>
+            <option value="gaming">🎮 Video Games</option>
+            <option value="civilizations">🏺 Ancient Civilizations</option>
+            <option value="movies">🎬 Movies</option>
+            <option value="actors">🎭 Actors</option>
+            <option value="planets">🪐 Planets</option>
+            <option value="animals" selected>🐾 Animals</option>
+            <option value="flowers">🌸 Flowers</option>
+            <option value="trees">🌲 Trees</option>
+            <option value="books">📚 Classic Books</option>
+            <option value="cars">🏎️ Cars</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="pt-3">
+        <button id="startGameSubmit" class="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-sm tracking-wide shadow-lg shadow-emerald-500/20 transition">
+          Deal Cards & Play
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Round End / Winner Modal -->
+  <div id="roundEndModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md hidden">
+    <div class="bg-slate-900 border border-amber-500/50 rounded-3xl p-6 sm:p-8 max-w-lg w-full text-center shadow-2xl space-y-5">
+      <div class="w-16 h-16 mx-auto rounded-3xl bg-amber-400/20 border border-amber-400/50 flex items-center justify-center text-3xl shadow-lg shadow-amber-400/20">
+        🏆
+      </div>
+
+      <div>
+        <h2 id="winnerTitleText" class="text-2xl font-black text-white">Player Wins!</h2>
+        <p id="winnerSubText" class="text-xs text-amber-300 font-medium">Collected all 4 identical cards!</p>
+      </div>
+
+      <!-- Winning Quartet showcase -->
+      <div class="p-3 bg-slate-950/70 border border-slate-800 rounded-2xl">
+        <div class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-2">Winning Set</div>
+        <div id="winningHandShowcase" class="flex items-center justify-center gap-2">
+          <!-- cards rendered here -->
+        </div>
+      </div>
+
+      <!-- Scores Table -->
+      <div class="space-y-1.5 text-left bg-slate-950/50 p-3 rounded-2xl border border-slate-800">
+        <div class="text-[11px] font-bold uppercase text-slate-400 px-1 flex justify-between">
+          <span>Player</span>
+          <span>Round Points</span>
+        </div>
+        <div id="roundScoresList" class="space-y-1 text-xs">
+          <!-- rows -->
+        </div>
+      </div>
+
+      <div class="pt-2 flex items-center gap-2">
+        <button id="nextRoundBtn" class="flex-1 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs sm:text-sm tracking-wide shadow-lg transition">
+          Next Round (Dealer Shifts ➔)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scoreboard Modal -->
+  <div id="scoreboardModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md hidden">
+    <div class="bg-slate-900 border border-emerald-500/40 rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-emerald-900/60">
+        <div class="flex items-center gap-2">
+          <i data-lucide="trophy" class="w-5 h-5 text-amber-400"></i>
+          <h3 class="text-base font-bold text-white">Match Scoreboard</h3>
+        </div>
+        <button id="closeScoreboardBtn" class="text-slate-400 hover:text-white">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div id="scoreboardList" class="space-y-2">
+        <!-- Dynamic score list -->
+      </div>
+      <p class="text-[11px] text-slate-400 text-center italic">
+        Winner scores 100 pts. Others get 25 pts for each matching card in their highest set.
+      </p>
+    </div>
+  </div>
+
+  <!-- Rules Modal -->
+  <div id="rulesModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md hidden">
+    <div class="bg-slate-900 border border-emerald-500/40 rounded-3xl p-6 sm:p-7 max-w-lg w-full shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-2 border-b border-emerald-900/60">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i data-lucide="book-open" class="w-5 h-5 text-emerald-400"></i>
+          How to Play (Card Quartet)
+        </h3>
+        <button id="closeRulesBtn" class="text-slate-400 hover:text-white">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs text-slate-300 leading-relaxed">
+        <div class="p-3 bg-emerald-950/40 border border-emerald-800/40 rounded-xl">
+          <strong class="text-emerald-300 block mb-1">🎯 The Goal:</strong>
+          Be the first player to collect all <span class="text-amber-300 font-bold">4 cards of the same kind</span> (e.g. 4 Lions, 4 Inceptions, or 4 Mars cards).
+        </div>
+
+        <ol class="list-decimal list-inside space-y-2 text-slate-300">
+          <li><strong>The Deal:</strong> 4 cards of each suit are created for every player (e.g. 4 players = 16 cards). Every player starts with 4 cards.</li>
+          <li><strong>Dealer Passes First:</strong> The dealer selects 1 card they don't want and passes it secretly to the next player clockwise.</li>
+          <li><strong>Holding 5 Cards:</strong> The next player receives this card and now holds 5 cards. They choose 1 of their 5 cards to pass to the next player.</li>
+          <li><strong>Continuous Passing:</strong> This continues around the circle until someone collects all 4 cards of a single suit.</li>
+          <li><strong>Secrecy:</strong> Cards are passed face-down so other players cannot see what you are collecting!</li>
+        </ol>
+
+        <div class="p-3 bg-slate-950/70 border border-slate-800 rounded-xl space-y-1">
+          <div class="text-amber-300 font-bold">Scoring Rules:</div>
+          <div>• <strong>Round Winner:</strong> Scores <span class="text-amber-400 font-bold">100 points</span>.</div>
+          <div>• <strong>Other Players:</strong> Score <span class="text-emerald-400 font-bold">25 points per card</span> in their single highest matching set (e.g., 3 matching = 75 pts, 2 matching = 50 pts).</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card Vault (Cached Decks Modal) -->
+  <div id="cardVaultModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md hidden">
+    <div class="bg-slate-900 border border-amber-500/40 rounded-3xl p-6 sm:p-7 max-w-2xl w-full shadow-2xl space-y-4 max-h-[85vh] flex flex-col">
+      <div class="flex items-center justify-between pb-3 border-b border-amber-900/40 shrink-0">
+        <div class="flex items-center gap-2">
+          <i data-lucide="archive" class="w-5 h-5 text-amber-400"></i>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-base font-bold text-white">Online Card Vault</h3>
+              <span id="cloudStatusBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-semibold flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>Cloud Synced</span>
+              </span>
+            </div>
+            <p class="text-[11px] text-slate-400">Cards are stored in the shared cloud catalog and retrieved across all multiplayer matches.</p>
+          </div>
+        </div>
+        <button id="closeVaultBtn" class="text-slate-400 hover:text-white">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Theme Selector inside Vault -->
+      <div class="flex flex-wrap items-center justify-between gap-3 shrink-0">
+        <div class="flex items-center gap-2">
+          <label class="text-xs text-slate-300 font-bold">Theme Catalog:</label>
+          <select id="vaultThemeFilter" class="bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white focus:outline-none focus:border-amber-400">
+            <!-- Populated dynamically -->
+          </select>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="syncCloudVaultBtn" class="px-2.5 py-1 rounded-lg bg-emerald-500/20 border border-emerald-500/40 hover:bg-emerald-500/30 text-emerald-300 text-xs font-semibold flex items-center gap-1 transition">
+            <i data-lucide="cloud-download" class="w-3.5 h-3.5"></i>
+            <span>Refresh From Cloud</span>
+          </button>
+          <button id="regenerateVaultBtn" class="px-2.5 py-1 rounded-lg bg-amber-500/20 border border-amber-500/40 hover:bg-amber-500/30 text-amber-300 text-xs font-semibold flex items-center gap-1 transition">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+            <span>Re-Seed</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Vault Cards Grid -->
+      <div id="vaultCardsContainer" class="flex-1 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 p-1">
+        <!-- Injected dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Online Multiplayer Lobby Modal -->
+  <div id="onlineLobbyModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md hidden">
+    <div class="bg-slate-900 border border-emerald-500/40 rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-emerald-900/60">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-300">
+            <i data-lucide="globe" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">Online Multiplayer</h3>
+            <p class="text-[11px] text-slate-400">Play with friends on separate devices</p>
+          </div>
+        </div>
+        <button id="closeOnlineLobbyBtn" class="text-slate-400 hover:text-white">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Mode Selector: Create or Join -->
+      <div id="onlineRoomChoice" class="space-y-4">
+        <div class="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+          <label class="text-xs font-bold uppercase tracking-wider text-slate-300 block">Your Display Name</label>
+          <input id="onlinePlayerNameInput" type="text" maxlength="14" placeholder="Enter your name..." value="Player" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500 font-semibold">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <button id="createRoomBtn" class="p-4 rounded-2xl bg-gradient-to-br from-emerald-900/60 to-slate-900 border border-emerald-600/40 hover:border-emerald-400 text-left transition space-y-1">
+            <i data-lucide="plus-circle" class="w-5 h-5 text-emerald-400"></i>
+            <div class="text-xs font-black text-white">Host a Game</div>
+            <div class="text-[10px] text-slate-400">Create a new room code</div>
+          </button>
+
+          <button id="showJoinRoomBtn" class="p-4 rounded-2xl bg-gradient-to-br from-teal-900/60 to-slate-900 border border-teal-600/40 hover:border-teal-400 text-left transition space-y-1">
+            <i data-lucide="log-in" class="w-5 h-5 text-teal-400"></i>
+            <div class="text-xs font-black text-white">Join with Code</div>
+            <div class="text-[10px] text-slate-400">Enter a friend's code</div>
+          </button>
+        </div>
+
+        <!-- Join Room Form (hidden by default) -->
+        <div id="joinRoomForm" class="p-3 bg-slate-950 border border-slate-800 rounded-2xl space-y-2.5 hidden">
+          <label class="text-xs font-bold text-slate-300">Room Code (6 Letters/Digits)</label>
+          <div class="flex gap-2">
+            <input id="roomCodeInput" type="text" maxlength="6" placeholder="e.g. AB12CD" class="uppercase tracking-widest text-center flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white font-mono font-bold focus:outline-none focus:border-emerald-500">
+            <button id="submitJoinRoomBtn" class="px-4 py-2 rounded-xl bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs transition">
+              Join
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Waiting Lobby Room (Shown when joined/hosted) -->
+      <div id="liveRoomLobby" class="space-y-4 hidden">
+        <div class="p-3.5 rounded-2xl bg-gradient-to-r from-emerald-950/70 to-slate-950 border border-emerald-600/40 flex items-center justify-between">
+          <div>
+            <div class="text-[10px] uppercase font-bold text-emerald-400 tracking-wider">Room Code</div>
+            <div id="displayRoomCode" class="text-2xl font-black text-white font-mono tracking-widest">------</div>
+          </div>
+          <button id="copyRoomCodeBtn" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-amber-300 font-semibold border border-slate-700 flex items-center gap-1 transition">
+            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+            <span>Copy</span>
+          </button>
+        </div>
+
+        <div class="space-y-2">
+          <div class="flex items-center justify-between text-xs text-slate-400 font-semibold">
+            <span>Connected Players (<span id="connectedPlayersCount">1</span>/6)</span>
+            <span class="text-amber-400 text-[11px]">Need 3+ to start</span>
+          </div>
+          <div id="connectedPlayersList" class="space-y-1.5">
+            <!-- Dynamic player pills -->
+          </div>
+        </div>
+
+        <!-- Host Controls -->
+        <div id="hostControlsArea" class="pt-2 space-y-2 hidden">
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-slate-400">Selected Theme:</span>
+            <select id="onlineThemeSelect" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white focus:outline-none">
+              <option value="superheroes">Superheroes</option>
+              <option value="mythology">Mythical Creatures</option>
+              <option value="landmarks">World Landmarks</option>
+              <option value="ocean">Ocean Life</option>
+              <option value="gaming">Video Games</option>
+              <option value="civilizations">Ancient Civilizations</option>
+              <option value="movies">Movies</option>
+              <option value="actors">Actors</option>
+              <option value="planets">Planets</option>
+              <option value="animals" selected>Animals</option>
+              <option value="flowers">Flowers</option>
+              <option value="trees">Trees</option>
+              <option value="books">Classic Books</option>
+              <option value="cars">Cars</option>
+            </select>
+          </div>
+          <button id="startOnlineMatchBtn" class="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs sm:text-sm tracking-wide shadow-lg transition">
+            Start Match & Deal Cards
+          </button>
+        </div>
+
+        <div id="guestWaitingNotice" class="text-center text-xs text-slate-400 py-2 hidden">
+          Waiting for room host to start the game...
+        </div>
+
+        <button id="leaveOnlineRoomBtn" class="w-full py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs transition">
+          Leave Room
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toastNotification" class="fixed bottom-4 right-4 z-50 px-4 py-2 rounded-xl bg-slate-900 border border-emerald-500/50 text-white text-xs font-semibold shadow-2xl opacity-0 transition-opacity duration-300 pointer-events-none">
+    Notice
+  </div>
+
+  <!-- Firebase SDK imports -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    window.FirebaseModule = {
+      initializeApp,
+      getAuth,
+      signInAnonymously,
+      signInWithCustomToken,
+      onAuthStateChanged,
+      getFirestore,
+      doc,
+      getDoc,
+      setDoc,
+      updateDoc,
+      onSnapshot,
+      collection
+    };
+    window.dispatchEvent(new CustomEvent('firebase-modules-ready'));
+  </script>
+
+  <!-- ================= JAVASCRIPT LOGIC ================= -->
+  <script>
+    /* -------------------------------------------------------------
+       AUDIO SYNTHESIZER (Pure Web Audio)
+    ------------------------------------------------------------- */
+    class SoundEngine {
+      constructor() {
+        this.ctx = null;
+      }
+      init() {
+        if (!this.ctx) {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (AudioContextClass) this.ctx = new AudioContextClass();
+        }
+      }
+      playPass() {
+        try {
+          this.init();
+          if (!this.ctx) return;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(320, this.ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(540, this.ctx.currentTime + 0.12);
+          gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start();
+          osc.stop(this.ctx.currentTime + 0.12);
+        } catch (e) {}
+      }
+      playSelect() {
+        try {
+          this.init();
+          if (!this.ctx) return;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(620, this.ctx.currentTime);
+          gain.gain.setValueAtTime(0.08, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.08);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start();
+          osc.stop(this.ctx.currentTime + 0.08);
+        } catch (e) {}
+      }
+      playWin() {
+        try {
+          this.init();
+          if (!this.ctx) return;
+          const notes = [440, 554, 659, 880];
+          notes.forEach((freq, idx) => {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, this.ctx.currentTime + idx * 0.1);
+            gain.gain.setValueAtTime(0.15, this.ctx.currentTime + idx * 0.1);
+            gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + idx * 0.1 + 0.35);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(this.ctx.currentTime + idx * 0.1);
+            osc.stop(this.ctx.currentTime + idx * 0.1 + 0.35);
+          });
+        } catch (e) {}
+      }
+    }
+    const sound = new SoundEngine();
+
+    /* -------------------------------------------------------------
+       THEMES DEFINITION (14 Unique Themes)
+    ------------------------------------------------------------- */
+    const THEMES = {
+      superheroes: [
+        { id: 'iron_knight', name: 'Iron Knight', symbol: '🦾', icon: 'shield', color: 'from-amber-600 to-red-700', border: 'border-red-500', bg: 'bg-red-950/40' },
+        { id: 'thunder_god', name: 'Thunder God', symbol: '⚡', icon: 'zap', color: 'from-yellow-400 to-amber-600', border: 'border-yellow-400', bg: 'bg-yellow-950/40' },
+        { id: 'web_slinger', name: 'Web Slinger', symbol: '🕷️', icon: 'target', color: 'from-red-600 to-blue-700', border: 'border-blue-400', bg: 'bg-blue-950/40' },
+        { id: 'dark_vigilante', name: 'Dark Vigilante', symbol: '🦇', icon: 'moon', color: 'from-slate-700 to-zinc-900', border: 'border-slate-500', bg: 'bg-zinc-950/40' },
+        { id: 'speedster', name: 'Speedster', symbol: '⚡', icon: 'wind', color: 'from-amber-500 to-red-600', border: 'border-amber-400', bg: 'bg-amber-950/40' },
+        { id: 'amazonian', name: 'Amazon Warrior', symbol: '⚔️', icon: 'award', color: 'from-amber-400 to-rose-600', border: 'border-rose-400', bg: 'bg-rose-950/40' }
+      ],
+      mythology: [
+        { id: 'dragon', name: 'Ancient Dragon', symbol: '🐉', icon: 'flame', color: 'from-red-600 to-amber-700', border: 'border-red-500', bg: 'bg-red-950/40' },
+        { id: 'phoenix', name: 'Solar Phoenix', symbol: '🔥', icon: 'sun', color: 'from-amber-500 to-orange-600', border: 'border-orange-500', bg: 'bg-orange-950/40' },
+        { id: 'griffin', name: 'Royal Griffin', symbol: '🦅', icon: 'feather', color: 'from-yellow-500 to-amber-700', border: 'border-amber-400', bg: 'bg-amber-950/40' },
+        { id: 'unicorn', name: 'Celestial Unicorn', symbol: '🦄', icon: 'sparkles', color: 'from-pink-400 to-purple-600', border: 'border-pink-400', bg: 'bg-pink-950/40' },
+        { id: 'kraken', name: 'Abyssal Kraken', symbol: '🐙', icon: 'anchor', color: 'from-teal-600 to-blue-900', border: 'border-teal-400', bg: 'bg-teal-950/40' },
+        { id: 'hydra', name: 'Venom Hydra', symbol: '🐍', icon: 'activity', color: 'from-emerald-600 to-teal-800', border: 'border-emerald-500', bg: 'bg-emerald-950/40' }
+      ],
+      landmarks: [
+        { id: 'eiffel', name: 'Eiffel Tower', symbol: '🗼', icon: 'map-pin', color: 'from-amber-600 to-slate-700', border: 'border-amber-400', bg: 'bg-amber-950/40' },
+        { id: 'pyramids', name: 'Giza Pyramids', symbol: '🔺', icon: 'compass', color: 'from-yellow-600 to-amber-800', border: 'border-yellow-500', bg: 'bg-yellow-950/40' },
+        { id: 'taj_mahal', name: 'Taj Mahal', symbol: '🕌', icon: 'heart', color: 'from-teal-400 to-cyan-600', border: 'border-cyan-400', bg: 'bg-cyan-950/40' },
+        { id: 'colosseum', name: 'Roman Colosseum', symbol: '🏛️', icon: 'shield', color: 'from-stone-500 to-amber-700', border: 'border-amber-500', bg: 'bg-stone-950/40' },
+        { id: 'machu_picchu', name: 'Machu Picchu', symbol: '🏔️', icon: 'mountain', color: 'from-emerald-600 to-stone-700', border: 'border-emerald-400', bg: 'bg-emerald-950/40' },
+        { id: 'great_wall', name: 'The Great Wall', symbol: '🧱', icon: 'flag', color: 'from-red-700 to-stone-800', border: 'border-red-400', bg: 'bg-red-950/40' }
+      ],
+      ocean: [
+        { id: 'shark', name: 'Great White', symbol: '🦈', icon: 'navigation', color: 'from-cyan-600 to-blue-800', border: 'border-cyan-400', bg: 'bg-cyan-950/40' },
+        { id: 'whale', name: 'Blue Whale', symbol: '🐋', icon: 'cloud-rain', color: 'from-blue-600 to-indigo-900', border: 'border-blue-400', bg: 'bg-blue-950/40' },
+        { id: 'octopus', name: 'Giant Octopus', symbol: '🐙', icon: 'globe', color: 'from-purple-600 to-indigo-800', border: 'border-purple-400', bg: 'bg-purple-950/40' },
+        { id: 'turtle', name: 'Sea Turtle', symbol: '🐢', icon: 'shield', color: 'from-emerald-500 to-teal-800', border: 'border-emerald-400', bg: 'bg-emerald-950/40' },
+        { id: 'manta', name: 'Manta Ray', symbol: '🌊', icon: 'wind', color: 'from-teal-500 to-blue-700', border: 'border-teal-400', bg: 'bg-teal-950/40' },
+        { id: 'jellyfish', name: 'Luminous Jelly', symbol: '🪼', icon: 'sparkles', color: 'from-pink-500 to-violet-700', border: 'border-pink-400', bg: 'bg-pink-950/40' }
+      ],
+      gaming: [
+        { id: 'plumber', name: 'Pixel Plumber', symbol: '🍄', icon: 'crosshair', color: 'from-red-500 to-amber-600', border: 'border-red-400', bg: 'bg-red-950/40' },
+        { id: 'elf_hero', name: 'Hero of Hyrule', symbol: '🗡️', icon: 'shield', color: 'from-emerald-500 to-teal-700', border: 'border-emerald-400', bg: 'bg-emerald-950/40' },
+        { id: 'chief', name: 'Spartan Chief', symbol: '🪖', icon: 'award', color: 'from-lime-600 to-emerald-800', border: 'border-lime-500', bg: 'bg-lime-950/40' },
+        { id: 'hedgehog', name: 'Blue Blur', symbol: '🦔', icon: 'zap', color: 'from-blue-500 to-indigo-700', border: 'border-blue-400', bg: 'bg-blue-950/40' },
+        { id: 'tomb_raider', name: 'Tomb Explorer', symbol: '🏹', icon: 'compass', color: 'from-amber-600 to-stone-700', border: 'border-amber-400', bg: 'bg-stone-950/40' },
+        { id: 'pac', name: 'Ghost Chomper', symbol: '🟡', icon: 'circle', color: 'from-yellow-400 to-amber-500', border: 'border-yellow-400', bg: 'bg-yellow-950/40' }
+      ],
+      civilizations: [
+        { id: 'egypt', name: 'Ancient Egypt', symbol: '𓂀', icon: 'sun', color: 'from-amber-500 to-yellow-600', border: 'border-yellow-400', bg: 'bg-amber-950/40' },
+        { id: 'rome', name: 'Imperial Rome', symbol: '🏛️', icon: 'feather', color: 'from-red-600 to-rose-800', border: 'border-rose-400', bg: 'bg-red-950/40' },
+        { id: 'greece', name: 'Classical Greece', symbol: '🏺', icon: 'award', color: 'from-sky-500 to-blue-700', border: 'border-sky-400', bg: 'bg-sky-950/40' },
+        { id: 'maya', name: 'Maya Kingdom', symbol: '🗿', icon: 'layers', color: 'from-emerald-600 to-teal-800', border: 'border-emerald-400', bg: 'bg-emerald-950/40' },
+        { id: 'mesopotamia', name: 'Mesopotamia', symbol: '📜', icon: 'book', color: 'from-orange-600 to-amber-800', border: 'border-orange-400', bg: 'bg-orange-950/40' },
+        { id: 'vikings', name: 'Nordic Vikings', symbol: '⚔️', icon: 'anchor', color: 'from-slate-500 to-cyan-800', border: 'border-cyan-400', bg: 'bg-slate-950/40' }
+      ],
+      movies: [
+        { id: 'inception', name: 'Inception', symbol: '🌀', icon: 'film', color: 'from-blue-600 to-indigo-800', border: 'border-blue-400', bg: 'bg-blue-950/40' },
+        { id: 'titanic', name: 'Titanic', symbol: '🚢', icon: 'anchor', color: 'from-cyan-600 to-blue-700', border: 'border-cyan-400', bg: 'bg-cyan-950/40' },
+        { id: 'avatar', name: 'Avatar', symbol: '🌿', icon: 'sparkles', color: 'from-teal-500 to-emerald-700', border: 'border-teal-400', bg: 'bg-teal-950/40' },
+        { id: 'matrix', name: 'The Matrix', symbol: '🕶️', icon: 'terminal', color: 'from-emerald-500 to-green-700', border: 'border-emerald-400', bg: 'bg-emerald-950/40' },
+        { id: 'gladiator', name: 'Gladiator', symbol: '⚔️', icon: 'shield', color: 'from-amber-600 to-red-800', border: 'border-amber-400', bg: 'bg-amber-950/40' },
+        { id: 'jurassic', name: 'Jurassic Park', symbol: '🦖', icon: 'alert-triangle', color: 'from-orange-600 to-amber-800', border: 'border-orange-400', bg: 'bg-orange-950/40' }
+      ],
+      actors: [
+        { id: 'leo', name: 'Leonardo DiCaprio', symbol: '🎭', icon: 'user', color: 'from-amber-500 to-amber-700', border: 'border-amber-400', bg: 'bg-amber-950/40' },
+        { id: 'meryl', name: 'Meryl Streep', symbol: '🏆', icon: 'award', color: 'from-purple-500 to-indigo-700', border: 'border-purple-400', bg: 'bg-purple-950/40' },
+        { id: 'tom', name: 'Tom Hanks', symbol: '🎬', icon: 'smile', color: 'from-emerald-500 to-teal-700', border: 'border-emerald-400', bg: 'bg-emerald-950/40' },
+        { id: 'morgan', name: 'Morgan Freeman', symbol: '🎙️', icon: 'mic', color: 'from-blue-500 to-slate-700', border: 'border-blue-400', bg: 'bg-blue-950/40' },
+        { id: 'keanu', name: 'Keanu Reeves', symbol: '🕶️', icon: 'zap', color: 'from-slate-600 to-zinc-800', border: 'border-slate-400', bg: 'bg-slate-950/40' },
+        { id: 'scarlett', name: 'Scarlett Johansson', symbol: '✨', icon: 'star', color: 'from-rose-500 to-red-700', border: 'border-rose-400', bg: 'bg-rose-950/40' }
+      ],
+      planets: [
+        { id: 'mars', name: 'Mars', symbol: '🔴', icon: 'globe', color: 'from-red-600 to-orange-700', border: 'border-red-400', bg: 'bg-red-950/40' },
+        { id: 'jupiter', name: 'Jupiter', symbol: '🟠', icon: 'disc', color: 'from-amber-600 to-yellow-700', border: 'border-amber-400', bg: 'bg-amber-950/40' },
+        { id: 'saturn', name: 'Saturn', symbol: '🪐', icon: 'circle', color: 'from-yellow-500 to-amber-600', border: 'border-yellow-400', bg: 'bg-yellow-950/40' },
+        { id: 'venus', name: 'Venus', symbol: '🟡', icon: 'sun', color: 'from-amber-400 to-orange-500', border: 'border-amber-300', bg: 'bg-amber-950/40' },
+        { id: 'neptune', name: 'Neptune', symbol: '🔵', icon: 'droplet', color: 'from-blue-600 to-cyan-700', border: 'border-blue-400', bg: 'bg-blue-950/40' },
+        { id: 'mercury', name: 'Mercury', symbol: '⚪', icon: 'moon', color: 'from-slate-400 to-slate-600', border: 'border-slate-300', bg: 'bg-slate-950/40' }
+      ],
+      animals: [
+        { id: 'lion', name: 'Majestic Lion', symbol: '🦁', icon: 'crown', color: 'from-amber-500 to-yellow-600', border: 'border-amber-400', bg: 'bg-amber-950/40' },
+        { id: 'tiger', name: 'Bengal Tiger', symbol: '🐯', icon: 'zap', color: 'from-orange-500 to-amber-600', border: 'border-orange-400', bg: 'bg-orange-950/40' },
+        { id: 'bear', name: 'Grizzly Bear', symbol: '🐻', icon: 'shield', color: 'from-stone-600 to-stone-800', border: 'border-stone-400', bg: 'bg-stone-950/40' },
+        { id: 'eagle', name: 'Golden Eagle', symbol: '🦅', icon: 'feather', color: 'from-yellow-600 to-amber-700', border: 'border-yellow-400', bg: 'bg-yellow-950/40' },
+        { id: 'wolf', name: 'Timber Wolf', symbol: '🐺', icon: 'moon', color: 'from-slate-500 to-blue-700', border: 'border-slate-400', bg: 'bg-slate-950/40' },
+        { id: 'panda', name: 'Giant Panda', symbol: '🐼', icon: 'heart', color: 'from-emerald-600 to-teal-800', border: 'border-emerald-400', bg: 'bg-emerald-950/40' }
+      ],
+      flowers: [
+        { id: 'rose', name: 'Red Rose', symbol: '🌹', icon: 'heart', color: 'from-rose-600 to-red-700', border: 'border-rose-400', bg: 'bg-rose-950/40' },
+        { id: 'lotus', name: 'Sacred Lotus', symbol: '🪷', icon: 'sun', color: 'from-pink-400 to-rose-500', border: 'border-pink-300', bg: 'bg-pink-950/40' },
+        { id: 'sunflower', name: 'Golden Sunflower', symbol: '🌻', icon: 'sun', color: 'from-yellow-400 to-amber-500', border: 'border-yellow-300', bg: 'bg-yellow-950/40' },
+        { id: 'orchid', name: 'Royal Orchid', symbol: '🌺', icon: 'sparkles', color: 'from-purple-500 to-pink-600', border: 'border-purple-300', bg: 'bg-purple-950/40' },
+        { id: 'tulip', name: 'Spring Tulip', symbol: '🌷', icon: 'feather', color: 'from-red-400 to-orange-500', border: 'border-red-300', bg: 'bg-red-950/40' },
+        { id: 'lavender', name: 'Sweet Lavender', symbol: '🪻', icon: 'wind', color: 'from-indigo-400 to-purple-600', border: 'border-indigo-300', bg: 'bg-indigo-950/40' }
+      ],
+      trees: [
+        { id: 'oak', name: 'Mighty Oak', symbol: '🌳', icon: 'shield', color: 'from-emerald-700 to-stone-800', border: 'border-emerald-500', bg: 'bg-emerald-950/40' },
+        { id: 'redwood', name: 'Giant Redwood', symbol: '🌲', icon: 'arrow-up', color: 'from-amber-700 to-red-900', border: 'border-amber-500', bg: 'bg-amber-950/40' },
+        { id: 'bonsai', name: 'Zen Bonsai', symbol: '🪴', icon: 'sparkles', color: 'from-teal-600 to-emerald-800', border: 'border-teal-400', bg: 'bg-teal-950/40' },
+        { id: 'willow', name: 'Weeping Willow', symbol: '🌿', icon: 'wind', color: 'from-lime-600 to-emerald-700', border: 'border-lime-400', bg: 'bg-lime-950/40' },
+        { id: 'maple', name: 'Sugar Maple', symbol: '🍁', icon: 'flame', color: 'from-orange-500 to-red-700', border: 'border-orange-400', bg: 'bg-orange-950/40' },
+        { id: 'baobab', name: 'Grand Baobab', symbol: '🌴', icon: 'sun', color: 'from-amber-600 to-yellow-800', border: 'border-amber-400', bg: 'bg-amber-950/40' }
+      ],
+      books: [
+        { id: '1984', name: 'Nineteen Eighty-Four', symbol: '👁️', icon: 'eye', color: 'from-slate-600 to-zinc-800', border: 'border-slate-400', bg: 'bg-zinc-950/40' },
+        { id: 'gatsby', name: 'The Great Gatsby', symbol: '🍸', icon: 'star', color: 'from-yellow-500 to-amber-700', border: 'border-yellow-400', bg: 'bg-amber-950/40' },
+        { id: 'odyssey', name: 'The Odyssey', symbol: '⛵', icon: 'compass', color: 'from-blue-600 to-indigo-800', border: 'border-blue-400', bg: 'bg-blue-950/40' },
+        { id: 'dune', name: 'Dune', symbol: '🏜️', icon: 'sun', color: 'from-amber-600 to-orange-800', border: 'border-amber-400', bg: 'bg-orange-950/40' },
+        { id: 'hobbit', name: 'The Hobbit', symbol: '💍', icon: 'shield', color: 'from-emerald-600 to-teal-800', border: 'border-emerald-400', bg: 'bg-emerald-950/40' },
+        { id: 'frankenstein', name: 'Frankenstein', symbol: '⚡', icon: 'zap', color: 'from-teal-700 to-slate-800', border: 'border-teal-400', bg: 'bg-teal-950/40' }
+      ],
+      cars: [
+        { id: 'ferrari', name: 'Italian Stallion', symbol: '🏎️', icon: 'zap', color: 'from-red-600 to-rose-700', border: 'border-red-500', bg: 'bg-red-950/40' },
+        { id: 'porsche', name: 'Classic 911', symbol: '🏁', icon: 'award', color: 'from-amber-500 to-yellow-600', border: 'border-amber-400', bg: 'bg-amber-950/40' },
+        { id: 'lamborghini', name: 'Raging Bull', symbol: '🐂', icon: 'flame', color: 'from-yellow-400 to-amber-600', border: 'border-yellow-400', bg: 'bg-yellow-950/40' },
+        { id: 'mustang', name: 'Muscle GT', symbol: '🐎', icon: 'activity', color: 'from-blue-600 to-indigo-800', border: 'border-blue-400', bg: 'bg-blue-950/40' },
+        { id: 'bugatti', name: 'Hyper Chiron', symbol: '🚀', icon: 'sparkles', color: 'from-sky-500 to-blue-700', border: 'border-sky-400', bg: 'bg-sky-950/40' },
+        { id: 'tesla', name: 'Cyber Electric', symbol: '⚡', icon: 'cpu', color: 'from-slate-400 to-zinc-600', border: 'border-slate-300', bg: 'bg-zinc-950/40' }
+      ]
+    };
+
+    /* -------------------------------------------------------------
+       RANDOM PLAYER NAMES GENERATOR
+    ------------------------------------------------------------- */
+    const RANDOM_NAMES = [
+      'Felix', 'Luna', 'Jasper', 'Maya', 'Orion', 
+      'Stella', 'Rowan', 'Nova', 'Leo', 'Freya', 
+      'Atlas', 'Aria', 'Milo', 'Chloe', 'Ezra', 
+      'Hazel', 'Finn', 'Ivy', 'Kai', 'Zara',
+      'Silas', 'Cleo', 'Dante', 'Ruby', 'Zephyr'
+    ];
+
+    function getRandomNamesList(count, keepFirstAsYou = false) {
+      const pool = shuffle([...RANDOM_NAMES]);
+      const result = [];
+      for (let i = 0; i < count; i++) {
+        if (i === 0 && keepFirstAsYou) {
+          result.push('You');
+        } else {
+          result.push(pool[i % pool.length] || `Challenger ${i + 1}`);
+        }
+      }
+      return result;
+    }
+
+    function getRandomSingleName() {
+      return RANDOM_NAMES[Math.floor(Math.random() * RANDOM_NAMES.length)];
+    }
+
+    /* -------------------------------------------------------------
+       CLOUD BACKEND & STORAGE (Firestore Rules Compliant)
+    ------------------------------------------------------------- */
+    const appId = 'card-quartet-game';
+    let db = null;
+    let auth = null;
+    let currentAuthUser = null;
+    let currentOnlineRoomId = null;
+    let onlineRoomUnsubscribe = null;
+
+    async function initCloudBackend() {
+      if (!window.FirebaseModule) return;
+      try {
+        /* =============================================================
+           PASTE YOUR FIREBASE CONFIGURATION OBJECT HERE
+           (Replace the placeholder values with your project credentials)
+        ============================================================= */
+const firebaseConfig = {
+  apiKey: "AIzaSyAkqMyw44KFlNiyEGYvQIjBpR_rFYeD0Ew",
+  authDomain: "card-quartet-game.firebaseapp.com",
+  projectId: "card-quartet-game",
+  storageBucket: "card-quartet-game.firebasestorage.app",
+  messagingSenderId: "50390439816",
+  appId: "1:50390439816:web:89095d247d8d9347fa8c3d"
+};
+
+        // Fallback guard if placeholder hasn't been replaced yet
+        if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "PASTE_YOUR_API_KEY_HERE") {
+          console.log('Firebase configuration is using placeholder values. Please update firebaseConfig inside initCloudBackend().');
+          const badge = document.getElementById('cloudStatusBadge');
+          if (badge) {
+            badge.innerHTML = `
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+              <span>Needs Config</span>
+            `;
+          }
+          return;
+        }
+
+        const app = window.FirebaseModule.initializeApp(firebaseConfig);
+        auth = window.FirebaseModule.getAuth(app);
+        db = window.FirebaseModule.getFirestore(app);
+
+        await window.FirebaseModule.signInAnonymously(auth);
+        currentAuthUser = auth.currentUser;
+        console.log('Cloud Backend Initialized! Signed in anonymously with UID:', currentAuthUser?.uid);
+
+        // Update vault status badge
+        const badge = document.getElementById('cloudStatusBadge');
+        if (badge) {
+          badge.innerHTML = `
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>Cloud Connected</span>
+          `;
+        }
+
+        // Sync active theme catalog with cloud
+        await cardVault.syncThemeWithCloud(state.themeKey);
+      } catch (err) {
+        console.warn('Cloud backend initialization fallback:', err);
+      }
+    }
+
+    window.addEventListener('firebase-modules-ready', () => {
+      initCloudBackend();
+    });
+
+    /* -------------------------------------------------------------
+       PERSISTENT CARD VAULT / CACHE (Online Cloud + Local Sync)
+    ------------------------------------------------------------- */
+    const CARD_CACHE_KEY = 'QUARTET_CARD_CACHE_V2';
+
+    class CardVault {
+      constructor() {
+        this.cache = {};
+        this.loadLocalCache();
+      }
+
+      loadLocalCache() {
+        try {
+          const raw = localStorage.getItem(CARD_CACHE_KEY);
+          if (raw) {
+            this.cache = JSON.parse(raw);
+          }
+        } catch (e) {
+          this.cache = {};
+        }
+        this.ensureAllThemesGenerated();
+      }
+
+      saveLocalCache() {
+        try {
+          localStorage.setItem(CARD_CACHE_KEY, JSON.stringify(this.cache));
+        } catch (e) {}
+      }
+
+      ensureAllThemesGenerated(force = false) {
+        let changed = false;
+        for (const [themeKey, kinds] of Object.entries(THEMES)) {
+          if (force || !this.cache[themeKey] || this.cache[themeKey].length === 0) {
+            this.cache[themeKey] = this.buildThemeDeck(themeKey, kinds);
+            changed = true;
+          }
+        }
+        if (changed) {
+          this.saveLocalCache();
+        }
+      }
+
+      buildThemeDeck(themeKey, kinds) {
+        const deck = [];
+        kinds.forEach((kind) => {
+          for (let c = 1; c <= 4; c++) {
+            deck.push({
+              id: `${themeKey}_${kind.id}_${c}`,
+              kindId: kind.id,
+              cardNumber: c,
+              theme: themeKey,
+              name: kind.name,
+              symbol: kind.symbol,
+              icon: kind.icon,
+              color: kind.color,
+              border: kind.border,
+              bg: kind.bg
+            });
+          }
+        });
+        return deck;
+      }
+
+      /* Cloud Persistence: Store theme cards in cloud public catalog */
+      async syncThemeWithCloud(themeKey) {
+        if (!db || !currentAuthUser) return;
+        try {
+          // Public Catalog Collection: /artifacts/{appId}/public/data/card_catalogs
+          const docRef = window.FirebaseModule.doc(db, 'artifacts', appId, 'public', 'data', 'card_catalogs', themeKey);
+          const snap = await window.FirebaseModule.getDoc(docRef);
+
+          if (snap.exists()) {
+            const data = snap.data();
+            if (data && Array.isArray(data.cards) && data.cards.length > 0) {
+              this.cache[themeKey] = data.cards;
+              this.saveLocalCache();
+              return;
+            }
+          }
+
+          // If not in cloud, seed the pre-generated cards to the cloud catalog
+          const localDeck = this.cache[themeKey] || this.buildThemeDeck(themeKey, THEMES[themeKey] || THEMES.animals);
+          await window.FirebaseModule.setDoc(docRef, {
+            theme: themeKey,
+            cards: localDeck,
+            updatedAt: Date.now()
+          });
+          console.log(`Seeded cloud card catalog for theme: ${themeKey}`);
+        } catch (e) {
+          console.warn('Cloud sync error for theme:', themeKey, e);
+        }
+      }
+
+      /* Retrieve pre-generated cards for a game round */
+      getDeckForRound(themeKey, playerCount) {
+        if (!this.cache[themeKey]) {
+          this.ensureAllThemesGenerated();
+        }
+        const fullDeck = this.cache[themeKey];
+        const themeKinds = THEMES[themeKey] || THEMES.animals;
+        const selectedKinds = themeKinds.slice(0, playerCount).map(k => k.id);
+        const roundDeck = fullDeck.filter(card => selectedKinds.includes(card.kindId));
+        return roundDeck.map(card => ({ ...card }));
+      }
+
+      getCardById(themeKey, cardId) {
+        const deck = this.cache[themeKey] || [];
+        return deck.find(c => c.id === cardId) || null;
+      }
+
+      getAllThemeCards(themeKey) {
+        if (!this.cache[themeKey]) {
+          this.ensureAllThemesGenerated();
+        }
+        return this.cache[themeKey] || [];
+      }
+
+      clearAndRegenerate(themeKey = null) {
+        if (themeKey) {
+          delete this.cache[themeKey];
+        } else {
+          this.cache = {};
+        }
+        this.ensureAllThemesGenerated(true);
+      }
+    }
+
+    const cardVault = new CardVault();
+
+    /* -------------------------------------------------------------
+       GAME STATE
+    ------------------------------------------------------------- */
+    const state = {
+      playerCount: 4,
+      playMode: 'bots', // 'bots', 'passplay', or 'online'
+      themeKey: 'animals',
+      botDelay: 900,
+      roundNumber: 1,
+      players: [],
+      turnIndex: 0,
+      dealerIndex: 0,
+      selectedCardId: null,
+      isRoundActive: false,
+      isPassInProgress: false,
+      botTimer: null,
+      scores: {},
+      myPlayerId: 0,
+      isOnlineHost: false
+    };
+
+    /* Helper: Array Shuffle */
+    function shuffle(array) {
+      const arr = [...array];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function updateStatusToast(msg) {
+      const toast = document.getElementById('toastNotification');
+      if (!toast) return;
+      toast.textContent = msg;
+      toast.classList.remove('opacity-0');
+      toast.classList.add('opacity-100');
+      clearTimeout(window._toastTimeout);
+      window._toastTimeout = setTimeout(() => {
+        toast.classList.remove('opacity-100');
+        toast.classList.add('opacity-0');
+      }, 2400);
+    }
+
+    /* -------------------------------------------------------------
+       SETUP & ROUND INITIALIZATION
+    ------------------------------------------------------------- */
+    function setupEventListeners() {
+      // Player count selector buttons in Setup Modal
+      document.querySelectorAll('.player-count-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.player-count-btn').forEach(b => {
+            b.classList.remove('border-emerald-500', 'bg-emerald-500/20', 'text-emerald-300');
+            b.classList.add('border-slate-700', 'bg-slate-800', 'text-slate-200');
+          });
+          btn.classList.add('border-emerald-500', 'bg-emerald-500/20', 'text-emerald-300');
+          btn.classList.remove('border-slate-700', 'bg-slate-800', 'text-slate-200');
+          state.playerCount = parseInt(btn.dataset.players, 10);
+        });
+      });
+
+      // Play style change
+      document.querySelectorAll('input[name="playMode"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+          state.playMode = e.target.value;
+          const botSpeedBox = document.getElementById('botSpeedContainer');
+          if (state.playMode === 'bots') {
+            botSpeedBox.classList.remove('hidden');
+          } else if (state.playMode === 'online') {
+            botSpeedBox.classList.add('hidden');
+            document.getElementById('setupModal').classList.add('hidden');
+            openOnlineLobby();
+          } else {
+            botSpeedBox.classList.add('hidden');
+          }
+        });
+      });
+
+      // Submit Setup
+      document.getElementById('startGameSubmit').addEventListener('click', () => {
+        state.botDelay = parseInt(document.getElementById('botSpeedSelect').value, 10);
+        state.themeKey = document.getElementById('cardThemeSelect').value;
+        document.getElementById('setupModal').classList.add('hidden');
+        resetMatchScores();
+        startNewRound();
+      });
+
+      // Header Buttons
+      document.getElementById('newGameHeaderBtn').addEventListener('click', () => {
+        clearTimeout(state.botTimer);
+        document.getElementById('setupModal').classList.remove('hidden');
+      });
+
+      document.getElementById('themeSwitcherHeaderBtn').addEventListener('click', () => {
+        clearTimeout(state.botTimer);
+        document.getElementById('setupModal').classList.remove('hidden');
+      });
+
+      document.getElementById('rulesHeaderBtn').addEventListener('click', () => {
+        document.getElementById('rulesModal').classList.remove('hidden');
+      });
+      document.getElementById('closeRulesBtn').addEventListener('click', () => {
+        document.getElementById('rulesModal').classList.add('hidden');
+      });
+
+      // Card Vault Modal
+      document.getElementById('cardVaultHeaderBtn').addEventListener('click', openCardVaultModal);
+      document.getElementById('closeVaultBtn').addEventListener('click', () => {
+        document.getElementById('cardVaultModal').classList.add('hidden');
+      });
+      document.getElementById('vaultThemeFilter').addEventListener('change', (e) => {
+        renderVaultCards(e.target.value);
+      });
+      document.getElementById('regenerateVaultBtn').addEventListener('click', () => {
+        const theme = document.getElementById('vaultThemeFilter').value;
+        cardVault.clearAndRegenerate(theme);
+        cardVault.syncThemeWithCloud(theme);
+        renderVaultCards(theme);
+        updateStatusToast(`Re-seeded all cards for ${theme}!`);
+      });
+      document.getElementById('syncCloudVaultBtn').addEventListener('click', async () => {
+        const theme = document.getElementById('vaultThemeFilter').value;
+        await cardVault.syncThemeWithCloud(theme);
+        renderVaultCards(theme);
+        updateStatusToast(`Refreshed ${theme} catalog from Cloud!`);
+      });
+
+      // Scoreboard Modal
+      document.getElementById('viewScoresBtn').addEventListener('click', openScoreboard);
+      document.getElementById('closeScoreboardBtn').addEventListener('click', () => {
+        document.getElementById('scoreboardModal').classList.add('hidden');
+      });
+
+      // Next Round from Win Modal
+      document.getElementById('nextRoundBtn').addEventListener('click', () => {
+        document.getElementById('roundEndModal').classList.add('hidden');
+        if (state.playMode === 'online' && currentOnlineRoomId) {
+          if (state.isOnlineHost) {
+            startNextOnlineRound();
+          } else {
+            updateStatusToast('Waiting for host to launch next round...');
+          }
+        } else {
+          state.dealerIndex = (state.dealerIndex + 1) % state.playerCount;
+          state.roundNumber += 1;
+          startNewRound();
+        }
+      });
+
+      // Pass & Play Ready Button
+      document.getElementById('readyRevealHandBtn').addEventListener('click', () => {
+        document.getElementById('passAndPlayModal').classList.add('hidden');
+        renderUI();
+      });
+
+      // Pass Action Button
+      document.getElementById('passSelectedCardBtn').addEventListener('click', () => {
+        if (!state.selectedCardId) return;
+        executePass(state.selectedCardId);
+      });
+
+      // Online Multiplayer Lobby Listeners
+      document.getElementById('onlineLobbyHeaderBtn').addEventListener('click', openOnlineLobby);
+      document.getElementById('closeOnlineLobbyBtn').addEventListener('click', () => {
+        document.getElementById('onlineLobbyModal').classList.add('hidden');
+      });
+      document.getElementById('createRoomBtn').addEventListener('click', handleCreateOnlineRoom);
+      document.getElementById('showJoinRoomBtn').addEventListener('click', () => {
+        document.getElementById('joinRoomForm').classList.toggle('hidden');
+      });
+      document.getElementById('submitJoinRoomBtn').addEventListener('click', handleJoinOnlineRoom);
+      document.getElementById('copyRoomCodeBtn').addEventListener('click', () => {
+        const code = document.getElementById('displayRoomCode').textContent;
+        const temp = document.createElement('input');
+        temp.value = code;
+        document.body.appendChild(temp);
+        temp.select();
+        document.execCommand('copy');
+        document.body.removeChild(temp);
+        updateStatusToast(`Copied room code: ${code}`);
+      });
+      document.getElementById('startOnlineMatchBtn').addEventListener('click', handleStartOnlineMatch);
+      document.getElementById('leaveOnlineRoomBtn').addEventListener('click', handleLeaveOnlineRoom);
+    }
+
+    /* -------------------------------------------------------------
+       ONLINE MULTIPLAYER ROOM ENGINE
+    ------------------------------------------------------------- */
+    function openOnlineLobby() {
+      const nameInput = document.getElementById('onlinePlayerNameInput');
+      if (nameInput && (!nameInput.value || nameInput.value === 'Player')) {
+        nameInput.value = getRandomSingleName();
+      }
+      document.getElementById('onlineLobbyModal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function generateRoomCode() {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let code = '';
+      for (let i = 0; i < 6; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return code;
+    }
+
+    async function handleCreateOnlineRoom() {
+      if (!db || !currentAuthUser) {
+        updateStatusToast('Connect your Firebase keys in index.html to host online rooms.');
+        return;
+      }
+      const pName = document.getElementById('onlinePlayerNameInput').value.trim() || 'Host';
+      const roomId = generateRoomCode();
+      const theme = state.themeKey;
+
+      try {
+        await cardVault.syncThemeWithCloud(theme);
+
+        const roomDocRef = window.FirebaseModule.doc(db, 'artifacts', appId, 'public', 'data', 'game_rooms', roomId);
+        const initialRoomData = {
+          roomId: roomId,
+          hostUid: currentAuthUser.uid,
+          themeKey: theme,
+          status: 'lobby',
+          dealerIndex: 0,
+          turnIndex: 0,
+          roundNumber: 1,
+          lastPass: null,
+          winnerInfo: null,
+          players: [
+            {
+              uid: currentAuthUser.uid,
+              name: pName,
+              seatIndex: 0,
+              isHost: true,
+              handIds: [],
+              score: 0,
+              wins: 0
+            }
+          ],
+          createdAt: Date.now()
+        };
+
+        await window.FirebaseModule.setDoc(roomDocRef, initialRoomData);
+        currentOnlineRoomId = roomId;
+        state.isOnlineHost = true;
+        state.myPlayerId = 0;
+        state.playMode = 'online';
+
+        setupRoomListener(roomId);
+        showLobbyRoomView(roomId, true);
+        updateStatusToast(`Room ${roomId} created!`);
+      } catch (e) {
+        console.error('Failed to create room:', e);
+        updateStatusToast('Could not create room in cloud.');
+      }
+    }
+
+    async function handleJoinOnlineRoom() {
+      if (!db || !currentAuthUser) {
+        updateStatusToast('Connect your Firebase keys in index.html to join online rooms.');
+        return;
+      }
+      const code = document.getElementById('roomCodeInput').value.trim().toUpperCase();
+      const pName = document.getElementById('onlinePlayerNameInput').value.trim() || 'Player';
+
+      if (code.length !== 6) {
+        updateStatusToast('Please enter a valid 6-character room code.');
+        return;
+      }
+
+      try {
+        const roomDocRef = window.FirebaseModule.doc(db, 'artifacts', appId, 'public', 'data', 'game_rooms', code);
+        const snap = await window.FirebaseModule.getDoc(roomDocRef);
+
+        if (!snap.exists()) {
+          updateStatusToast('Room not found! Check the code.');
+          return;
+        }
+
+        const roomData = snap.data();
+        if (roomData.status !== 'lobby') {
+          updateStatusToast('Match already in progress!');
+          return;
+        }
+
+        const existingPlayer = roomData.players.find(p => p.uid === currentAuthUser.uid);
+        let seatIndex = roomData.players.length;
+
+        if (existingPlayer) {
+          seatIndex = existingPlayer.seatIndex;
+        } else {
+          if (roomData.players.length >= 6) {
+            updateStatusToast('Room is full (max 6 players).');
+            return;
+          }
+          const newPlayer = {
+            uid: currentAuthUser.uid,
+            name: pName,
+            seatIndex: seatIndex,
+            isHost: false,
+            handIds: [],
+            score: 0,
+            wins: 0
+          };
+          roomData.players.push(newPlayer);
+          await window.FirebaseModule.updateDoc(roomDocRef, {
+            players: roomData.players
+          });
+        }
+
+        currentOnlineRoomId = code;
+        state.isOnlineHost = (roomData.hostUid === currentAuthUser.uid);
+        state.myPlayerId = seatIndex;
+        state.playMode = 'online';
+        state.themeKey = roomData.themeKey;
+
+        await cardVault.syncThemeWithCloud(roomData.themeKey);
+
+        setupRoomListener(code);
+        showLobbyRoomView(code, state.isOnlineHost);
+        updateStatusToast(`Joined Room ${code}!`);
+      } catch (e) {
+        console.error('Error joining room:', e);
+        updateStatusToast('Could not join room.');
+      }
+    }
+
+    function setupRoomListener(roomId) {
+      if (onlineRoomUnsubscribe) onlineRoomUnsubscribe();
+      const roomDocRef = window.FirebaseModule.doc(db, 'artifacts', appId, 'public', 'data', 'game_rooms', roomId);
+
+      onlineRoomUnsubscribe = window.FirebaseModule.onSnapshot(roomDocRef, (snap) => {
+        if (!snap.exists()) return;
+        const room = snap.data();
+        handleRoomSyncUpdate(room);
+      }, (err) => {
+        console.warn('Online room listener error:', err);
+      });
+    }
+
+    function showLobbyRoomView(code, isHost) {
+      document.getElementById('onlineRoomChoice').classList.add('hidden');
+      document.getElementById('liveRoomLobby').classList.remove('hidden');
+      document.getElementById('displayRoomCode').textContent = code;
+
+      const hostControls = document.getElementById('hostControlsArea');
+      const guestNotice = document.getElementById('guestWaitingNotice');
+      if (isHost) {
+        hostControls.classList.remove('hidden');
+        guestNotice.classList.add('hidden');
+      } else {
+        hostControls.classList.add('hidden');
+        guestNotice.classList.remove('hidden');
+      }
+    }
+
+    function handleLeaveOnlineRoom() {
+      if (onlineRoomUnsubscribe) {
+        onlineRoomUnsubscribe();
+        onlineRoomUnsubscribe = null;
+      }
+      currentOnlineRoomId = null;
+      state.playMode = 'bots';
+      document.getElementById('liveRoomLobby').classList.add('hidden');
+      document.getElementById('onlineRoomChoice').classList.remove('hidden');
+      document.getElementById('onlineLobbyModal').classList.add('hidden');
+      startNewRound();
+      updateStatusToast('Left online room.');
+    }
+
+    async function handleStartOnlineMatch() {
+      if (!state.isOnlineHost || !currentOnlineRoomId || !db) return;
+      const theme = document.getElementById('onlineThemeSelect').value;
+      state.themeKey = theme;
+
+      await cardVault.syncThemeWithCloud(theme);
+      const roomDocRef = window.FirebaseModule.doc(db, 'artifacts', appId, 'public', 'data', 'game_rooms', currentOnlineRoomId);
+      const snap = await window.FirebaseModule.getDoc(roomDocRef);
+      if (!snap.exists()) return;
+
+      const room = snap.data();
+      const pCount = room.players.length;
+      if (pCount < 3) {
+        updateStatusToast('Need at least 3 players to start!');
+        return;
+      }
+
+      let deck = cardVault.getDeckForRound(theme, pCount);
+      deck = shuffle(shuffle(deck));
+
+      const updatedPlayers = room.players.map((p, idx) => {
+        const slice = deck.slice(idx * 4, (idx + 1) * 4);
+        return {
+          ...p,
+          handIds: slice.map(c => c.id)
+        };
+      });
+
+      await window.FirebaseModule.updateDoc(roomDocRef, {
+        status: 'in_progress',
+        themeKey: theme,
+        players: updatedPlayers,
+        dealerIndex: 0,
+        turnIndex: 0,
+        roundNumber: 1,
+        lastPass: null,
+        winnerInfo: null
+      });
+
+      document.getElementById('onlineLobbyModal').classList.add('hidden');
+    }
+
+    async function startNextOnlineRound() {
+      if (!state.isOnlineHost || !currentOnlineRoomId || !db) return;
+      const roomDocRef = window.FirebaseModule.doc(db, 'artifacts', appId, 'public', 'data', 'game_rooms', currentOnlineRoomId);
+      const snap = await window.FirebaseModule.getDoc(roomDocRef);
+      if (!snap.exists()) return;
+      const room = snap.data();
+      const pCount = room.players.length;
+
+      let deck = cardVault.getDeckForRound(room.themeKey, pCount);
+      deck = shuffle(shuffle(deck));
+
+      const nextDealer = (room.dealerIndex + 1) % pCount;
+      const updatedPlayers = room.players.map((p, idx) => {
+        const slice = deck.slice(idx * 4, (idx + 1) * 4);
+        return {
+          ...p,
+          handIds: slice.map(c => c.id)
+        };
+      });
+
+      await window.FirebaseModule.updateDoc(roomDocRef, {
+        status: 'in_progress',
+        players: updatedPlayers,
+        dealerIndex: nextDealer,
+        turnIndex: nextDealer,
+        roundNumber: (room.roundNumber || 1) + 1,
+        lastPass: null,
+        winnerInfo: null
+      });
+    }
+
+    function handleRoomSyncUpdate(room) {
+      document.getElementById('connectedPlayersCount').textContent = room.players.length;
+      const list = document.getElementById('connectedPlayersList');
+      list.innerHTML = '';
+      room.players.forEach(p => {
+        const isMe = (currentAuthUser && p.uid === currentAuthUser.uid);
+        list.innerHTML += `
+          <div class="flex items-center justify-between p-2 rounded-xl bg-slate-900 border ${isMe ? 'border-amber-400/60 bg-amber-950/20' : 'border-slate-800'}">
+            <div class="flex items-center gap-2">
+              <span class="w-6 h-6 rounded-full bg-emerald-800 text-emerald-200 text-xs font-bold flex items-center justify-center">
+                P${p.seatIndex + 1}
+              </span>
+              <span class="text-xs font-bold text-white">${p.name} ${isMe ? '(You)' : ''}</span>
+            </div>
+            ${p.isHost ? '<span class="text-[9px] bg-amber-500/20 text-amber-300 font-bold px-1.5 py-0.5 rounded border border-amber-500/30">Host</span>' : ''}
+          </div>
+        `;
+      });
+
+      const mySeat = room.players.findIndex(p => p.uid === currentAuthUser?.uid);
+      if (mySeat !== -1) {
+        state.myPlayerId = mySeat;
+      }
+
+      if (room.status === 'in_progress' || room.status === 'round_ended') {
+        document.getElementById('onlineLobbyModal').classList.add('hidden');
+        syncOnlineRoomToLocalState(room);
+      }
+    }
+
+    function syncOnlineRoomToLocalState(room) {
+      state.themeKey = room.themeKey;
+      state.playerCount = room.players.length;
+      state.dealerIndex = room.dealerIndex;
+      state.turnIndex = room.turnIndex;
+      state.roundNumber = room.roundNumber || 1;
+      state.isRoundActive = (room.status === 'in_progress');
+
+      state.players = room.players.map(p => {
+        const fullCards = (p.handIds || []).map(id => cardVault.getCardById(room.themeKey, id)).filter(Boolean);
+        return {
+          id: p.seatIndex,
+          name: p.name,
+          isHuman: true,
+          uid: p.uid,
+          hand: fullCards
+        };
+      });
+
+      room.players.forEach(p => {
+        state.scores[p.seatIndex] = {
+          wins: p.wins || 0,
+          points: p.score || 0
+        };
+      });
+
+      if (room.lastPass && room.lastPass.passId !== window._lastSeenPassId) {
+        window._lastSeenPassId = room.lastPass.passId;
+        const fromPlayer = state.players[room.lastPass.fromSeat];
+        const toPlayer = state.players[room.lastPass.toSeat];
+        if (fromPlayer && toPlayer) {
+          sound.playPass();
+          triggerPassAnimation(fromPlayer.name, toPlayer.name);
+        }
+      }
+
+      if (room.status === 'round_ended' && room.winnerInfo && !window._roundEndModalShowing) {
+        window._roundEndModalShowing = true;
+        finishOnlineRoundShowcase(room.winnerInfo);
+      } else if (room.status === 'in_progress') {
+        window._roundEndModalShowing = false;
+        document.getElementById('roundEndModal').classList.add('hidden');
+      }
+
+      renderUI();
+    }
+
+    async function executeOnlinePass(cardId) {
+      if (!currentOnlineRoomId || !db) return;
+      const roomDocRef = window.FirebaseModule.doc(db, 'artifacts', appId, 'public', 'data', 'game_rooms', currentOnlineRoomId);
+      const snap = await window.FirebaseModule.getDoc(roomDocRef);
+      if (!snap.exists()) return;
+      const room = snap.data();
+
+      const mySeat = state.myPlayerId;
+      if (room.turnIndex !== mySeat) return;
+
+      const nextSeat = (mySeat + 1) % room.players.length;
+      const myPlayer = room.players[mySeat];
+      const nextPlayer = room.players[nextSeat];
+
+      const cardIdx = myPlayer.handIds.indexOf(cardId);
+      if (cardIdx === -1) return;
+      myPlayer.handIds.splice(cardIdx, 1);
+
+      nextPlayer.handIds.push(cardId);
+
+      const nextFullCards = nextPlayer.handIds.map(id => cardVault.getCardById(room.themeKey, id)).filter(Boolean);
+      const winKind = checkFourOfAKind(nextFullCards);
+
+      if (winKind) {
+        const winnerSeat = nextSeat;
+        const scoreUpdates = room.players.map((p, idx) => {
+          const pCards = p.handIds.map(id => cardVault.getCardById(room.themeKey, id)).filter(Boolean);
+          const stats = getHighestMatchingStats(pCards);
+          const earned = (idx === winnerSeat) ? 100 : (stats.count * 25);
+          return {
+            ...p,
+            score: (p.score || 0) + earned,
+            wins: (p.wins || 0) + (idx === winnerSeat ? 1 : 0)
+          };
+        });
+
+        await window.FirebaseModule.updateDoc(roomDocRef, {
+          players: scoreUpdates,
+          status: 'round_ended',
+          winnerInfo: {
+            winnerSeat: winnerSeat,
+            winnerName: nextPlayer.name,
+            winKindId: winKind
+          },
+          lastPass: {
+            passId: Date.now(),
+            fromSeat: mySeat,
+            toSeat: nextSeat
+          }
+        });
+      } else {
+        await window.FirebaseModule.updateDoc(roomDocRef, {
+          players: room.players,
+          turnIndex: nextSeat,
+          lastPass: {
+            passId: Date.now(),
+            fromSeat: mySeat,
+            toSeat: nextSeat
+          }
+        });
+      }
+      state.selectedCardId = null;
+    }
+
+    function finishOnlineRoundShowcase(winnerInfo) {
+      sound.playWin();
+      confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 } });
+
+      const winner = state.players[winnerInfo.winnerSeat];
+      const modal = document.getElementById('roundEndModal');
+      document.getElementById('winnerTitleText').textContent = `${winnerInfo.winnerName} Wins the Round!`;
+      document.getElementById('winnerSubText').textContent = `Assembled all 4 cards of the set!`;
+
+      const showcase = document.getElementById('winningHandShowcase');
+      showcase.innerHTML = '';
+      const winCards = winner?.hand.filter(c => c.kindId === winnerInfo.winKindId).slice(0, 4) || [];
+      winCards.forEach(c => {
+        showcase.appendChild(createMiniCard(c));
+      });
+
+      const list = document.getElementById('roundScoresList');
+      list.innerHTML = '';
+      state.players.forEach(p => {
+        const isWin = (p.id === winnerInfo.winnerSeat);
+        const stats = getHighestMatchingStats(p.hand);
+        const earned = isWin ? 100 : stats.count * 25;
+        list.innerHTML += `
+          <div class="flex items-center justify-between p-2 rounded-xl ${isWin ? 'bg-amber-500/20 border border-amber-500/40 text-amber-200 font-bold' : 'bg-slate-900 border border-slate-800 text-slate-300'}">
+            <div>
+              <span>${p.name}</span>
+              <span class="text-[10px] text-slate-400 block">${isWin ? 'Winner (+100)' : `${stats.count} matching (+${earned})`}</span>
+            </div>
+            <div class="text-right">
+              <span class="text-emerald-400 font-black">+${earned} pts</span>
+              <span class="text-[10px] text-slate-400 block">Total: ${state.scores[p.id]?.points || 0} pts</span>
+            </div>
+          </div>
+        `;
+      });
+
+      const nextBtn = document.getElementById('nextRoundBtn');
+      if (state.isOnlineHost) {
+        nextBtn.textContent = 'Next Round (Host: Advance Dealer ➔)';
+        nextBtn.disabled = false;
+      } else {
+        nextBtn.textContent = 'Waiting for Host to Start Next Round...';
+        nextBtn.disabled = true;
+      }
+
+      modal.classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function resetMatchScores() {
+      state.scores = {};
+      for (let i = 0; i < state.playerCount; i++) {
+        state.scores[i] = { wins: 0, points: 0 };
+      }
+      state.roundNumber = 1;
+      state.dealerIndex = 0;
+    }
+
+    function startNewRound() {
+      clearTimeout(state.botTimer);
+      state.isRoundActive = true;
+      state.isPassInProgress = false;
+      state.selectedCardId = null;
+      state.turnIndex = state.dealerIndex;
+
+      const themeNameFormatted = state.themeKey.charAt(0).toUpperCase() + state.themeKey.slice(1);
+      document.getElementById('currentThemeLabel').textContent = themeNameFormatted;
+      document.getElementById('roundNumberDisplay').textContent = state.roundNumber;
+
+      let deck = cardVault.getDeckForRound(state.themeKey, state.playerCount);
+      deck = shuffle(shuffle(deck));
+
+      const keepFirstAsYou = (state.playMode === 'bots');
+      const assignedNames = getRandomNamesList(state.playerCount, keepFirstAsYou);
+
+      state.players = [];
+      for (let i = 0; i < state.playerCount; i++) {
+        const isHuman = (state.playMode === 'passplay') ? true : (i === 0);
+        state.players.push({
+          id: i,
+          name: assignedNames[i],
+          isHuman: isHuman,
+          hand: deck.slice(i * 4, (i + 1) * 4)
+        });
+      }
+
+      for (let i = 0; i < state.playerCount; i++) {
+        if (checkFourOfAKind(state.players[i].hand)) {
+          finishRound(i);
+          return;
+        }
+      }
+
+      renderUI();
+      triggerTurnFlow();
+    }
+
+    /* -------------------------------------------------------------
+       CARD VAULT UI (Inspect Cached & Online Cards)
+    ------------------------------------------------------------- */
+    function openCardVaultModal() {
+      const select = document.getElementById('vaultThemeFilter');
+      select.innerHTML = '';
+      for (const t in THEMES) {
+        const opt = document.createElement('option');
+        opt.value = t;
+        opt.textContent = t.charAt(0).toUpperCase() + t.slice(1);
+        if (t === state.themeKey) opt.selected = true;
+        select.appendChild(opt);
+      }
+      renderVaultCards(state.themeKey);
+      document.getElementById('cardVaultModal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function renderVaultCards(themeKey) {
+      const container = document.getElementById('vaultCardsContainer');
+      container.innerHTML = '';
+      const cards = cardVault.getAllThemeCards(themeKey);
+
+      cards.forEach(card => {
+        const cardBox = document.createElement('div');
+        cardBox.className = `p-3 rounded-xl border ${card.border} bg-gradient-to-br ${card.color} shadow flex flex-col justify-between h-32 relative overflow-hidden`;
+        cardBox.innerHTML = `
+          <div class="flex items-center justify-between text-xs font-black text-white/90">
+            <span>${card.symbol}</span>
+            <span class="text-[9px] bg-black/40 px-1 rounded font-mono">#${card.cardNumber}</span>
+          </div>
+          <div class="text-center">
+            <span class="text-2xl">${card.symbol}</span>
+            <div class="text-[11px] font-black text-white truncate drop-shadow">${card.name}</div>
+          </div>
+          <div class="text-[8px] text-white/70 font-mono truncate text-center">
+            ID: ${card.id}
+          </div>
+        `;
+        container.appendChild(cardBox);
+      });
+    }
+
+    /* -------------------------------------------------------------
+       GAME LOOP & TURN MECHANICS
+    ------------------------------------------------------------- */
+    function triggerTurnFlow() {
+      if (!state.isRoundActive) return;
+
+      const activePlayer = state.players[state.turnIndex];
+      const centerActionPrompt = document.getElementById('centerActionPrompt');
+      const centerSubPrompt = document.getElementById('centerSubPrompt');
+
+      if (state.playMode === 'online') {
+        const isMyTurn = (state.turnIndex === state.myPlayerId);
+        if (isMyTurn) {
+          centerActionPrompt.textContent = 'Your Turn to Pass a Card!';
+          centerSubPrompt.textContent = 'Select 1 card stack below and tap Pass.';
+        } else {
+          centerActionPrompt.textContent = `${activePlayer?.name}'s Turn (Passing...)`;
+          centerSubPrompt.textContent = 'Cards are passed secretly around the circle.';
+        }
+        return;
+      }
+
+      if (state.playMode === 'passplay') {
+        centerActionPrompt.textContent = `${activePlayer.name}'s Turn to Pass`;
+        centerSubPrompt.textContent = `Pick 1 card you don't need and pass it clockwise.`;
+      } else {
+        if (state.turnIndex === 0) {
+          centerActionPrompt.textContent = 'Your Turn to Pass a Card';
+          centerSubPrompt.textContent = 'Click on 1 unwanted card below, then tap "Pass Unwanted Card".';
+        } else {
+          centerActionPrompt.textContent = `${activePlayer.name} is choosing a card...`;
+          centerSubPrompt.textContent = `Passing secretly to ${state.players[(state.turnIndex + 1) % state.playerCount].name}`;
+        }
+      }
+
+      if (!activePlayer.isHuman) {
+        state.botTimer = setTimeout(() => {
+          botExecutePass(state.turnIndex);
+        }, state.botDelay);
+      }
+    }
+
+    /* -------------------------------------------------------------
+       PASSING MECHANISM
+    ------------------------------------------------------------- */
+    function executePass(cardId) {
+      if (!state.isRoundActive || state.isPassInProgress) return;
+
+      if (state.playMode === 'online') {
+        executeOnlinePass(cardId);
+        return;
+      }
+
+      const fromPlayer = state.players[state.turnIndex];
+      const cardIndex = fromPlayer.hand.findIndex(c => c.id === cardId);
+      if (cardIndex === -1) return;
+
+      state.isPassInProgress = true;
+      const [passedCard] = fromPlayer.hand.splice(cardIndex, 1);
+      const nextIndex = (state.turnIndex + 1) % state.playerCount;
+      const toPlayer = state.players[nextIndex];
+
+      sound.playPass();
+      triggerPassAnimation(fromPlayer.name, toPlayer.name, () => {
+        toPlayer.hand.push(passedCard);
+        state.selectedCardId = null;
+        state.isPassInProgress = false;
+
+        const winKind = checkFourOfAKind(toPlayer.hand);
+        if (winKind) {
+          finishRound(toPlayer.id);
+          return;
+        }
+
+        state.turnIndex = nextIndex;
+
+        if (state.playMode === 'passplay') {
+          showPassAndPlayIntermission(toPlayer.name);
+        } else {
+          renderUI();
+          triggerTurnFlow();
+        }
+      });
+    }
+
+    function botExecutePass(botIndex) {
+      if (!state.isRoundActive || state.isPassInProgress) return;
+      const bot = state.players[botIndex];
+      if (!bot || bot.hand.length === 0) return;
+
+      const counts = {};
+      bot.hand.forEach(c => { counts[c.kindId] = (counts[c.kindId] || 0) + 1; });
+
+      let maxKind = null;
+      let maxCount = -1;
+      for (const kind in counts) {
+        if (counts[kind] > maxCount) {
+          maxCount = counts[kind];
+          maxKind = kind;
+        }
+      }
+
+      let candidates = bot.hand.filter(c => c.kindId !== maxKind);
+      if (candidates.length === 0) candidates = bot.hand;
+
+      candidates.sort((a, b) => counts[a.kindId] - counts[b.kindId]);
+      const cardToPass = candidates[0];
+
+      executePass(cardToPass.id);
+    }
+
+    function triggerPassAnimation(fromName, toName, onComplete) {
+      const overlay = document.getElementById('passFlightOverlay');
+      const cardEl = document.getElementById('flightCard');
+
+      cardEl.innerHTML = `
+        <div class="w-24 h-36 rounded-2xl bg-gradient-to-br from-emerald-800 via-teal-900 to-slate-950 border-2 border-amber-400/80 shadow-2xl flex flex-col items-center justify-between p-2 text-center">
+          <div class="text-[10px] font-bold text-amber-300 uppercase tracking-widest">Secret Pass</div>
+          <div class="w-12 h-12 rounded-xl bg-emerald-950/80 border border-emerald-400/40 flex items-center justify-center text-2xl text-emerald-300">
+            🂠
+          </div>
+          <div class="text-[9px] text-emerald-200/90 font-mono">${fromName} ➔ ${toName}</div>
+        </div>
+      `;
+
+      overlay.classList.remove('hidden');
+      cardEl.style.transform = 'scale(0.8) translateY(-40px)';
+      cardEl.style.opacity = '0';
+
+      requestAnimationFrame(() => {
+        cardEl.style.transform = 'scale(1.1) translateY(0px)';
+        cardEl.style.opacity = '1';
+      });
+
+      setTimeout(() => {
+        cardEl.style.transform = 'scale(0.8) translateY(40px)';
+        cardEl.style.opacity = '0';
+        setTimeout(() => {
+          overlay.classList.add('hidden');
+          if (onComplete) onComplete();
+        }, 320);
+      }, 520);
+    }
+
+    function showPassAndPlayIntermission(nextPlayerName) {
+      document.getElementById('nextTurnPlayerName').textContent = nextPlayerName;
+      document.getElementById('passAndPlayModal').classList.remove('hidden');
+    }
+
+    function checkFourOfAKind(hand) {
+      const counts = {};
+      for (const card of hand) {
+        counts[card.kindId] = (counts[card.kindId] || 0) + 1;
+        if (counts[card.kindId] >= 4) {
+          return card.kindId;
+        }
+      }
+      return null;
+    }
+
+    function isCurrentTurnHuman() {
+      if (state.playMode === 'online') {
+        return state.turnIndex === state.myPlayerId;
+      }
+      const current = state.players[state.turnIndex];
+      if (!current) return false;
+      if (state.playMode === 'passplay') return true;
+      return current.id === 0;
+    }
+
+    function selectCardForHuman(cardId) {
+      if (!state.isRoundActive || state.isPassInProgress) return;
+      if (!isCurrentTurnHuman()) return;
+
+      state.selectedCardId = cardId;
+      sound.playSelect();
+      renderUI();
+    }
+
+    function getActiveViewPlayerIndex() {
+      if (state.playMode === 'online') {
+        return state.myPlayerId;
+      }
+      if (state.playMode === 'passplay') {
+        return state.turnIndex;
+      }
+      return 0;
+    }
+
+    /* -------------------------------------------------------------
+       ROUND FINISH & SCORING (Local / Bots)
+    ------------------------------------------------------------- */
+    function finishRound(winnerIdx) {
+      state.isRoundActive = false;
+      clearTimeout(state.botTimer);
+      sound.playWin();
+
+      confetti({
+        particleCount: 80,
+        spread: 70,
+        origin: { y: 0.6 }
+      });
+
+      const winner = state.players[winnerIdx];
+      const winKindId = checkFourOfAKind(winner.hand);
+      const fullTheme = THEMES[state.themeKey] || THEMES.animals;
+      const winKindObj = fullTheme.find(k => k.id === winKindId) || winner.hand[0];
+
+      const roundSummary = [];
+      state.players.forEach((p) => {
+        const stats = getHighestMatchingStats(p.hand);
+        let earnedPoints = 0;
+        let note = '';
+
+        if (p.id === winnerIdx) {
+          earnedPoints = 100;
+          note = 'Round Winner! (4 of a kind)';
+          if (state.scores[p.id]) state.scores[p.id].wins += 1;
+        } else {
+          earnedPoints = stats.count * 25;
+          note = `${stats.count} matching (${stats.count} × 25 pts)`;
+        }
+
+        if (state.scores[p.id]) state.scores[p.id].points += earnedPoints;
+
+        roundSummary.push({
+          id: p.id,
+          name: p.name,
+          isWinner: p.id === winnerIdx,
+          earned: earnedPoints,
+          note: note,
+          total: state.scores[p.id]?.points || 0
+        });
+      });
+
+      const modal = document.getElementById('roundEndModal');
+      document.getElementById('winnerTitleText').textContent = `${winner.name} Wins the Round!`;
+      document.getElementById('winnerSubText').textContent = `Assembled all 4 [${winKindObj.name}] cards!`;
+
+      const showcase = document.getElementById('winningHandShowcase');
+      showcase.innerHTML = '';
+      const winningCards = winner.hand.filter(c => c.kindId === winKindId).slice(0, 4);
+      winningCards.forEach(c => {
+        showcase.appendChild(createMiniCard(c));
+      });
+
+      const list = document.getElementById('roundScoresList');
+      list.innerHTML = '';
+      roundSummary.forEach(item => {
+        list.innerHTML += `
+          <div class="flex items-center justify-between p-2 rounded-xl ${item.isWinner ? 'bg-amber-500/20 border border-amber-500/40 text-amber-200 font-bold' : 'bg-slate-900 border border-slate-800 text-slate-300'}">
+            <div>
+              <span>${item.name}</span>
+              <span class="text-[10px] text-slate-400 block">${item.note}</span>
+            </div>
+            <div class="text-right">
+              <span class="text-emerald-400 font-black">+${item.earned} pts</span>
+              <span class="text-[10px] text-slate-400 block">Total: ${item.total} pts</span>
+            </div>
+          </div>
+        `;
+      });
+
+      const nextBtn = document.getElementById('nextRoundBtn');
+      nextBtn.textContent = 'Next Round (Dealer Shifts ➔)';
+      nextBtn.disabled = false;
+
+      modal.classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function getHighestMatchingStats(hand) {
+      const counts = {};
+      hand.forEach(c => { counts[c.kindId] = (counts[c.kindId] || 0) + 1; });
+      let maxCount = 0;
+      let maxKind = null;
+      for (const k in counts) {
+        if (counts[k] > maxCount) {
+          maxCount = counts[k];
+          maxKind = k;
+        }
+      }
+      return { kindId: maxKind, count: maxCount };
+    }
+
+    function openScoreboard() {
+      const list = document.getElementById('scoreboardList');
+      list.innerHTML = '';
+
+      state.players.forEach((p) => {
+        const s = state.scores[p.id] || { wins: 0, points: 0 };
+        list.innerHTML += `
+          <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-950 border border-slate-800">
+            <div class="flex items-center space-x-2">
+              <span class="w-6 h-6 rounded-full bg-emerald-900/60 text-emerald-300 text-xs font-bold flex items-center justify-center">
+                ${p.id + 1}
+              </span>
+              <span class="text-xs font-bold text-white">${p.name}</span>
+            </div>
+            <div class="text-right">
+              <span class="text-xs font-black text-amber-400">${s.points} pts</span>
+              <span class="text-[10px] text-slate-400 block">${s.wins} rounds won</span>
+            </div>
+          </div>
+        `;
+      });
+
+      document.getElementById('scoreboardModal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    /* -------------------------------------------------------------
+       UI RENDERING
+    ------------------------------------------------------------- */
+    function renderUI() {
+      const viewingIdx = getActiveViewPlayerIndex();
+      const viewingPlayer = state.players[viewingIdx];
+      if (!viewingPlayer) return;
+
+      document.getElementById('dealerBadge').textContent = `Dealer: ${state.players[state.dealerIndex]?.name || 'P1'}`;
+      const activePlayer = state.players[state.turnIndex];
+      const turnText = document.getElementById('turnText');
+      if (state.turnIndex === viewingIdx) {
+        turnText.textContent = `Your Turn to Pass (Holding ${viewingPlayer.hand.length} cards)`;
+        turnText.className = 'text-xs sm:text-sm font-bold text-amber-300 flex items-center gap-1.5';
+      } else {
+        turnText.textContent = `${activePlayer?.name}'s Turn (Passing...)`;
+        turnText.className = 'text-xs sm:text-sm font-semibold text-emerald-300 flex items-center gap-1.5';
+      }
+
+      renderOpponents(viewingIdx);
+      renderHumanHand(viewingPlayer);
+
+      const passBtnContainer = document.getElementById('passActionContainer');
+      const passBtn = document.getElementById('passSelectedCardBtn');
+      if (state.turnIndex === viewingIdx) {
+        passBtnContainer.classList.remove('hidden');
+        passBtn.disabled = !state.selectedCardId;
+      } else {
+        passBtnContainer.classList.add('hidden');
+      }
+
+      lucide.createIcons();
+    }
+
+    function renderOpponents(viewingIdx) {
+      const area = document.getElementById('opponentsArea');
+      area.innerHTML = '';
+
+      state.players.forEach((p, idx) => {
+        if (idx === viewingIdx) return;
+
+        const isTurn = (state.turnIndex === idx);
+        const isDealer = (state.dealerIndex === idx);
+
+        const card = document.createElement('div');
+        card.className = `flex flex-col items-center p-3 rounded-2xl bg-slate-900/80 border transition-all duration-300 min-w-[130px] sm:min-w-[150px] relative ${
+          isTurn 
+            ? 'border-amber-400 active-turn-ring scale-105 bg-slate-900' 
+            : 'border-emerald-800/40 hover:border-emerald-600/50'
+        }`;
+
+        card.innerHTML = `
+          ${isTurn ? '<div class="absolute -top-2.5 px-2 py-0.5 rounded-full bg-amber-500 text-slate-950 font-black text-[9px] uppercase tracking-wider shadow">Passing Now</div>' : ''}
+
+          <div class="flex items-center space-x-2 w-full justify-between mb-2">
+            <div class="flex items-center space-x-1.5">
+              <span class="w-6 h-6 rounded-full bg-emerald-800/60 flex items-center justify-center text-xs font-bold text-emerald-200">
+                ${p.name.charAt(0)}
+              </span>
+              <span class="text-xs font-bold text-white truncate max-w-[85px]">${p.name}</span>
+            </div>
+            ${isDealer ? '<span class="text-[9px] bg-amber-500/20 text-amber-300 font-bold px-1.5 py-0.5 rounded border border-amber-500/30">D</span>' : ''}
+          </div>
+
+          <div class="flex items-center -space-x-3 my-1">
+            ${Array(p.hand.length).fill(0).map(() => `
+              <div class="w-8 h-12 rounded-lg bg-gradient-to-br from-emerald-800 to-emerald-950 border border-emerald-500/50 shadow-md flex items-center justify-center text-[10px] text-emerald-300/60 font-mono">
+                🂠
+              </div>
+            `).join('')}
+          </div>
+
+          <div class="w-full mt-2 pt-2 border-t border-emerald-900/40 flex items-center justify-between text-[11px] text-slate-400">
+            <span>Cards: <strong class="text-white">${p.hand.length}</strong></span>
+            <span class="text-amber-400/90 text-[10px] font-semibold">${state.scores[p.id]?.points || 0} pts</span>
+          </div>
+        `;
+
+        area.appendChild(card);
+      });
+    }
+
+    function renderHumanHand(player) {
+      document.getElementById('currentPlayerName').textContent = `${player.name}'s Hand (${player.hand.length} Cards)`;
+      const container = document.getElementById('playerHandContainer');
+      container.innerHTML = '';
+
+      const isMyTurn = (state.turnIndex === player.id);
+      const instruction = document.getElementById('handInstructionText');
+      if (isMyTurn) {
+        instruction.textContent = 'Select 1 card stack to discard and pass forward:';
+      } else {
+        instruction.textContent = 'Waiting for your turn to pass...';
+      }
+
+      const stacksMap = {};
+      player.hand.forEach((card) => {
+        if (!stacksMap[card.kindId]) {
+          stacksMap[card.kindId] = {
+            kindId: card.kindId,
+            sampleCard: card,
+            cards: []
+          };
+        }
+        stacksMap[card.kindId].cards.push(card);
+      });
+
+      const sortedStacks = Object.values(stacksMap).sort((a, b) => {
+        if (b.cards.length !== a.cards.length) {
+          return b.cards.length - a.cards.length;
+        }
+        return a.sampleCard.name.localeCompare(b.sampleCard.name);
+      });
+
+      const matchStats = getHighestMatchingStats(player.hand);
+      document.getElementById('bestMatchCount').textContent = `${matchStats.count}/4`;
+
+      if (state.selectedCardId && !player.hand.some(c => c.id === state.selectedCardId)) {
+        state.selectedCardId = null;
+      }
+
+      sortedStacks.forEach((stack) => {
+        const stackCardIds = stack.cards.map(c => c.id);
+        const isSelected = stackCardIds.includes(state.selectedCardId);
+
+        const stackNode = createPlayerCardStack(stack, isSelected, isMyTurn);
+
+        stackNode.addEventListener('click', () => {
+          if (!isMyTurn) return;
+          const cardToPass = stack.cards[0];
+          selectCardForHuman(cardToPass.id);
+        });
+
+        container.appendChild(stackNode);
+      });
+    }
+
+    function createPlayerCardStack(stack, isSelected, isClickable) {
+      const card = stack.sampleCard;
+      const count = stack.cards.length;
+
+      const cardWidthClass = 'w-24 sm:w-32 md:w-36 shrink-0';
+      const cardHeightClass = 'h-36 sm:h-48 md:h-52';
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'card-stack-container cursor-pointer select-none mx-1.5 sm:mx-2.5 my-1 shrink-0';
+      
+      const offsetStepX = 6;
+      const offsetStepY = 6;
+      const totalOffsetX = (count - 1) * offsetStepX;
+      const totalOffsetY = (count - 1) * offsetStepY;
+
+      wrapper.style.paddingTop = `${totalOffsetY}px`;
+      wrapper.style.paddingRight = `${totalOffsetX}px`;
+
+      const stackInner = document.createElement('div');
+      stackInner.className = `relative ${cardWidthClass} ${cardHeightClass}`;
+
+      for (let i = 0; i < count - 1; i++) {
+        const subCard = document.createElement('div');
+        const layerOffsetX = (i + 1) * offsetStepX;
+        const layerOffsetY = (count - 1 - i) * offsetStepY;
+        const zIndex = 5 + i;
+
+        subCard.className = `stack-sub-card bg-gradient-to-br ${card.color} ${card.border} shadow-md overflow-hidden flex flex-col justify-between p-1.5 sm:p-2`;
+        subCard.style.top = `-${layerOffsetY}px`;
+        subCard.style.left = `${layerOffsetX}px`;
+        subCard.style.zIndex = zIndex;
+        subCard.style.opacity = `${0.75 + i * 0.1}`;
+
+        subCard.innerHTML = `
+          <div class="flex items-center justify-between text-[9px] sm:text-[10px] font-bold text-white/70">
+            <span>${card.symbol}</span>
+            <span class="text-[7px] sm:text-[8px] bg-black/40 px-1 rounded font-mono">#${i + 1}</span>
+          </div>
+          <div class="absolute inset-0 bg-black/25 pointer-events-none"></div>
+        `;
+        stackInner.appendChild(subCard);
+      }
+
+      const progressPercent = Math.min(100, (count / 4) * 100);
+
+      const mainCard = document.createElement('div');
+      mainCard.className = `card-hover-lift flex flex-col justify-between w-full h-full rounded-2xl p-2 sm:p-2.5 border-2 transition-all relative overflow-hidden bg-gradient-to-br ${card.color} ${
+        isSelected 
+          ? 'border-amber-400 ring-4 ring-amber-400/70 scale-105 -translate-y-2 z-30 shadow-2xl' 
+          : `${card.border} shadow-xl z-20`
+      } ${!isClickable ? 'opacity-85' : ''}`;
+
+      mainCard.innerHTML = `
+        <div class="flex items-center justify-between text-[11px] sm:text-xs font-black text-white/90">
+          <div class="flex items-center gap-1">
+            <span>${card.symbol}</span>
+            <span class="text-[9px] sm:text-[10px] font-mono tracking-tight opacity-80">${count > 1 ? `(${count})` : ''}</span>
+          </div>
+          
+          <div class="flex items-center gap-0.5 px-1.5 sm:px-2 py-0.5 rounded-full ${count === 4 ? 'bg-amber-400 text-slate-950 font-black animate-bounce shadow-md' : 'bg-slate-950/80 text-amber-300 border border-amber-400/50'} text-[10px] sm:text-[11px] font-extrabold shadow">
+            <span>${count}</span><span class="text-[8px] sm:text-[9px] opacity-80">/4</span>
+          </div>
+        </div>
+
+        <div class="flex-1 flex flex-col items-center justify-center my-0.5 sm:my-1 text-center">
+          <div class="relative w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-black/35 border border-white/20 backdrop-blur-sm flex items-center justify-center text-xl sm:text-3xl shadow-inner mb-1">
+            ${card.symbol}
+            ${count > 1 ? `
+              <div class="absolute -bottom-1 -right-1 px-1 sm:px-1.5 py-0.2 rounded bg-amber-500 text-slate-950 font-black text-[9px] sm:text-[10px] shadow border border-amber-300">
+                ×${count}
+              </div>
+            ` : ''}
+          </div>
+          <span class="text-[11px] sm:text-xs md:text-sm font-black text-white leading-tight px-1 drop-shadow truncate max-w-full">
+            ${card.name}
+          </span>
+        </div>
+
+        <div class="space-y-0.5 sm:space-y-1 border-t border-white/15 pt-1">
+          <div class="flex items-center justify-between text-[9px] sm:text-[10px] font-semibold text-white/80">
+            <span class="text-[8px] sm:text-[9px] uppercase tracking-wider text-white/75 truncate">${count === 4 ? '★ COMPLETE' : 'IN HAND'}</span>
+            <span class="font-mono text-amber-300 shrink-0">${isSelected ? '✓ Discard' : `${count} card${count > 1 ? 's' : ''}`}</span>
+          </div>
+          <div class="w-full bg-black/50 h-1 sm:h-1.5 rounded-full overflow-hidden border border-white/10">
+            <div class="h-full bg-gradient-to-r from-amber-400 to-emerald-400 transition-all duration-300" style="width: ${progressPercent}%"></div>
+          </div>
+        </div>
+      `;
+
+      stackInner.appendChild(mainCard);
+      wrapper.appendChild(stackInner);
+      return wrapper;
+    }
+
+    function createMiniCard(card) {
+      const el = document.createElement('div');
+      el.className = `flex flex-col items-center justify-center w-20 h-28 rounded-xl p-1.5 border border-amber-400/70 bg-gradient-to-br ${card.color} shadow-md`;
+      el.innerHTML = `
+        <span class="text-xl">${card.symbol}</span>
+        <span class="text-[10px] font-bold text-white text-center truncate max-w-full mt-1">${card.name}</span>
+      `;
+      return el;
+    }
+
+    /* -------------------------------------------------------------
+       INITIALIZE ON LOAD
+    ------------------------------------------------------------- */
+    window.onload = function() {
+      setupEventListeners();
+      resetMatchScores();
+      startNewRound();
+      lucide.createIcons();
+    };
+  </script>
+</body>
+</html>
