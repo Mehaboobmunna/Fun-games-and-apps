@@ -84,26 +84,36 @@
 
   <script>
     async function fetchAllStats() {
-      try {
-        // Fetch Quartet Clash count
-        const resQC = await fetch('https://api.counterapi.dev/v1/project-hub-games/quartet-clash/').catch(() => null);
-        const dataQC = resQC ? await resQC.json() : { count: 0 };
-        const qcCount = dataQC.count || 0;
-        document.getElementById('qc-matches').textContent = qcCount;
+      // Set safe default values immediately so the user never waits
+      let qcCount = 0;
+      let fttCount = 0;
 
+      try {
+        // Fetch Quartet Clash count with a timeout/error catch
+        const resQC = await fetch('https://api.counterapi.dev/v1/project-hub-games/quartet-clash/').catch(() => null);
+        if (resQC && resQC.ok) {
+          const dataQC = await resQC.json();
+          qcCount = dataQC.count || 0;
+        }
+      } catch (e) {
+        console.log("Could not fetch Quartet Clash stats");
+      }
+
+      try {
         // Fetch Find the Thief count
         const resFTT = await fetch('https://api.counterapi.dev/v1/project-hub-games/find-the-thief/').catch(() => null);
-        const dataFTT = resFTT ? await resFTT.json() : { count: 0 };
-        const fttCount = dataFTT.count || 0;
-        document.getElementById('ftt-matches').textContent = fttCount;
-
-        // Show sum total
-        document.getElementById('total-matches').textContent = qcCount + fttCount;
-      } catch (error) {
-        document.getElementById('total-matches').textContent = '0';
-        document.getElementById('qc-matches').textContent = '0';
-        document.getElementById('ftt-matches').textContent = '0';
+        if (resFTT && resFTT.ok) {
+          const dataFTT = await resFTT.json();
+          fttCount = dataFTT.count || 0;
+        }
+      } catch (e) {
+        console.log("Could not fetch Find the Thief stats");
       }
+
+      // Update the UI numbers
+      document.getElementById('qc-matches').textContent = qcCount;
+      document.getElementById('ftt-matches').textContent = fttCount;
+      document.getElementById('total-matches').textContent = qcCount + fttCount;
     }
 
     fetchAllStats();
