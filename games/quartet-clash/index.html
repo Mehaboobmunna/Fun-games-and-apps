@@ -714,19 +714,19 @@
     const THEMES = {
       alphabet: [
         { id: 'alpha_a', name: 'Letter A', symbol: '🅰️', color: 'from-blue-600 to-indigo-800', border: 'border-blue-400' },
-        { id: 'alpha_b', name: 'Letter B', symbol: '🅱️', color: 'from-emerald-600 to-teal-800', border: 'border-emerald-400' },
-        { id: 'alpha_c', name: 'Letter C', symbol: '🅲', color: 'from-amber-600 to-orange-700', border: 'border-amber-400' },
-        { id: 'alpha_d', name: 'Letter D', symbol: '🅳', color: 'from-purple-600 to-indigo-700', border: 'border-purple-400' },
-        { id: 'alpha_e', name: 'Letter E', symbol: '🅴', color: 'from-rose-600 to-red-800', border: 'border-rose-400' },
+        { id: 'alpha_b', name: 'Letter B', symbol: '🅱️', color: 'from-red-600 to-rose-800', border: 'border-red-400' },
+        { id: 'alpha_c', name: 'Letter C', symbol: '🅲', color: 'from-emerald-600 to-teal-800', border: 'border-emerald-400' },
+        { id: 'alpha_d', name: 'Letter D', symbol: '🅳', color: 'from-amber-500 to-yellow-700', border: 'border-amber-400' },
+        { id: 'alpha_e', name: 'Letter E', symbol: '🅔', color: 'from-purple-600 to-indigo-900', border: 'border-purple-400' },
         { id: 'alpha_f', name: 'Letter F', symbol: '🅵', color: 'from-cyan-600 to-blue-900', border: 'border-cyan-400' }
       ],
       numbers: [
-        { id: 'num_1', name: 'Number One', symbol: '1️⃣', color: 'from-amber-500 to-yellow-600', border: 'border-amber-400' },
+        { id: 'num_1', name: 'Number One', symbol: '1️⃣', color: 'from-emerald-500 to-teal-700', border: 'border-emerald-400' },
         { id: 'num_2', name: 'Number Two', symbol: '2️⃣', color: 'from-blue-500 to-indigo-700', border: 'border-blue-400' },
-        { id: 'num_3', name: 'Number Three', symbol: '3️⃣', color: 'from-emerald-500 to-teal-700', border: 'border-emerald-400' },
+        { id: 'num_3', name: 'Number Three', symbol: '3️⃣', color: 'from-amber-500 to-orange-600', border: 'border-amber-400' },
         { id: 'num_4', name: 'Number Four', symbol: '4️⃣', color: 'from-purple-500 to-pink-700', border: 'border-purple-400' },
         { id: 'num_5', name: 'Number Five', symbol: '5️⃣', color: 'from-rose-500 to-red-700', border: 'border-rose-400' },
-        { id: 'num_6', name: 'Number Six', symbol: '6️⃣', color: 'from-teal-500 to-cyan-800', border: 'border-teal-400' }
+        { id: 'num_6', name: 'Number Six', symbol: '6️⃣', color: 'from-cyan-500 to-blue-700', border: 'border-cyan-400' }
       ],
       superheroes: [
         { id: 'iron_knight', name: 'Iron Knight', symbol: '🦾', color: 'from-amber-600 to-red-700', border: 'border-red-500' },
@@ -870,31 +870,6 @@
         }
       }
       return result;
-    }
-
-    async function fetchTotalGamesPlayed() {
-      try {
-        const res = await fetch('https://api.counterapi.dev/v1/project-hub-games/quartet-clash');
-        if (res.ok) {
-          const data = await res.json();
-          const counterEl = document.getElementById('totalGamesCounter');
-          if (counterEl && typeof data.count === 'number') {
-            counterEl.textContent = data.count.toLocaleString();
-          }
-        }
-      } catch (e) {}
-    }
-
-    function incrementCompletedGameCount() {
-      fetch('https://api.counterapi.dev/v1/project-hub-games/quartet-clash/up')
-        .then(res => res.json())
-        .then(data => {
-          const counterEl = document.getElementById('totalGamesCounter');
-          if (counterEl && data && typeof data.count === 'number') {
-            counterEl.textContent = data.count.toLocaleString();
-          }
-        })
-        .catch(() => {});
     }
 
     const DEFAULT_FIREBASE_CONFIG = {
@@ -1077,15 +1052,15 @@
       }, 2200);
     }
 
-    function returnToGamesList() {
-      clearTimeout(state.botTimer);
-      state.isRoundActive = false;
-      if (onlineRoomUnsubscribe) {
-        onlineRoomUnsubscribe();
-        onlineRoomUnsubscribe = null;
-      }
-      // Navigate back to the games directory or parent home page
-      window.location.href = '../index.html';
+    async function fetchTotalGamesCount() {
+      try {
+        const res = await fetch('https://countapi.mileshilliard.com/api/v1/hit/project_hub_quartet_clash');
+        const data = await res.json();
+        if (data && typeof data.value === 'number') {
+          const counterEl = document.getElementById('totalGamesCounter');
+          if (counterEl) counterEl.textContent = data.value;
+        }
+      } catch (e) {}
     }
 
     function setupEventListeners() {
@@ -1125,8 +1100,8 @@
         startNewRound();
       });
 
-      document.getElementById('setupModalExitBtn').addEventListener('click', returnToGamesList);
-      document.getElementById('setupQuitBtn').addEventListener('click', returnToGamesList);
+      document.getElementById('setupModalExitBtn').addEventListener('click', performExitToGamesList);
+      document.getElementById('setupQuitBtn').addEventListener('click', performExitToGamesList);
 
       document.getElementById('newGameHeaderBtn').addEventListener('click', () => {
         clearTimeout(state.botTimer);
@@ -1179,9 +1154,18 @@
         }
       });
 
-      document.getElementById('quitMatchBtn').addEventListener('click', returnToGamesList);
+      document.getElementById('quitMatchBtn').addEventListener('click', async () => {
+        document.getElementById('roundEndModal').classList.add('hidden');
+        await performExitToGamesList();
+      });
 
       document.getElementById('leaveGameHeaderBtn').addEventListener('click', () => {
+        const subText = document.getElementById('leaveModalSubText');
+        if (state.playMode === 'online' && currentOnlineRoomId) {
+          subText.textContent = `You are connected to Online Room ${currentOnlineRoomId}. Leaving will return to games list.`;
+        } else {
+          subText.textContent = 'Leaving will end your active game and return to the main games directory.';
+        }
         document.getElementById('leaveConfirmModal').classList.remove('hidden');
         lucide.createIcons();
       });
@@ -1190,7 +1174,10 @@
         document.getElementById('leaveConfirmModal').classList.add('hidden');
       });
 
-      document.getElementById('confirmLeaveBtn').addEventListener('click', returnToGamesList);
+      document.getElementById('confirmLeaveBtn').addEventListener('click', async () => {
+        document.getElementById('leaveConfirmModal').classList.add('hidden');
+        await performExitToGamesList();
+      });
 
       document.getElementById('readyRevealHandBtn').addEventListener('click', () => {
         document.getElementById('passAndPlayModal').classList.add('hidden');
@@ -1221,7 +1208,7 @@
         });
       });
       document.getElementById('startOnlineMatchBtn').addEventListener('click', handleStartOnlineMatch);
-      document.getElementById('leaveOnlineRoomBtn').addEventListener('click', returnToGamesList);
+      document.getElementById('leaveOnlineRoomBtn').addEventListener('click', handleLeaveOnlineRoom);
     }
 
     function handlePassButtonClick() {
@@ -1412,6 +1399,53 @@
       }
     }
 
+    async function performExitToGamesList() {
+      clearTimeout(state.botTimer);
+      state.isRoundActive = false;
+
+      if (state.playMode === 'online' && currentOnlineRoomId && db && currentAuthUser) {
+        try {
+          const roomDocRef = window.FirebaseModule.doc(db, 'artifacts', appId, 'public', 'data', 'game_rooms', currentOnlineRoomId);
+          const snap = await window.FirebaseModule.getDoc(roomDocRef);
+          if (snap.exists()) {
+            const roomData = snap.data();
+            const updatedPlayers = (roomData.players || []).filter(p => p.uid !== currentAuthUser.uid);
+            updatedPlayers.forEach((p, idx) => { p.seatIndex = idx; });
+
+            if (updatedPlayers.length === 0) {
+              await window.FirebaseModule.setDoc(roomDocRef, { ...roomData, status: 'closed', players: [] });
+            } else {
+              const newHostUid = (roomData.hostUid === currentAuthUser.uid) ? updatedPlayers[0].uid : roomData.hostUid;
+              updatedPlayers[0].isHost = (updatedPlayers[0].uid === newHostUid);
+
+              await window.FirebaseModule.updateDoc(roomDocRef, {
+                hostUid: newHostUid,
+                players: updatedPlayers,
+                turnIndex: roomData.turnIndex % updatedPlayers.length
+              });
+            }
+          }
+        } catch (err) {
+          console.warn('Error during room departure:', err);
+        }
+      }
+
+      if (onlineRoomUnsubscribe) {
+        onlineRoomUnsubscribe();
+        onlineRoomUnsubscribe = null;
+      }
+
+      currentOnlineRoomId = null;
+      state.isOnlineHost = false;
+      state.playMode = 'bots';
+
+      window.location.href = '../index.html';
+    }
+
+    function handleLeaveOnlineRoom() {
+      performExitToGamesList();
+    }
+
     async function handleStartOnlineMatch() {
       if (!state.isOnlineHost || !currentOnlineRoomId || !db) return;
       const theme = document.getElementById('onlineThemeSelect').value;
@@ -1552,7 +1586,6 @@
 
       if (room.status === 'round_ended' && room.winnerInfo && !window._roundEndModalShowing) {
         window._roundEndModalShowing = true;
-        incrementCompletedGameCount();
         finishOnlineRoundShowcase(room.winnerInfo);
       } else if (room.status === 'in_progress') {
         window._roundEndModalShowing = false;
@@ -1585,6 +1618,9 @@
       const winKind = checkFourOfAKind(nextFullCards);
 
       if (winKind) {
+        fetch('https://countapi.mileshilliard.com/api/v1/hit/project_hub_quartet_clash').catch(() => {});
+        fetchTotalGamesCount();
+
         const winnerSeat = nextSeat;
         const scoreUpdates = room.players.map((p, idx) => {
           const pCards = p.handIds.map(id => cardVault.getCardById(room.themeKey, id)).filter(Boolean);
@@ -1713,7 +1749,6 @@
 
       for (let i = 0; i < state.playerCount; i++) {
         if (checkFourOfAKind(state.players[i].hand)) {
-          incrementCompletedGameCount();
           finishRound(i);
           return;
         }
@@ -1840,7 +1875,6 @@
         const winKind = checkFourOfAKind(toPlayer.hand);
         if (winKind) {
           clearTimeout(state.botTimer);
-          incrementCompletedGameCount();
           finishRound(toPlayer.id);
           return;
         }
@@ -1869,7 +1903,6 @@
       const currentWin = checkFourOfAKind(bot.hand);
       if (currentWin) {
         clearTimeout(state.botTimer);
-        incrementCompletedGameCount();
         finishRound(bot.id);
         return;
       }
@@ -1987,6 +2020,9 @@
       state.botTimer = null;
 
       sound.playWin();
+
+      fetch('https://countapi.mileshilliard.com/api/v1/hit/project_hub_quartet_clash').catch(() => {});
+      fetchTotalGamesCount();
 
       try {
         confetti({
@@ -2358,7 +2394,7 @@
     window.onload = function() {
       setupEventListeners();
       resetMatchScores();
-      fetchTotalGamesPlayed();
+      fetchTotalGamesCount();
       document.getElementById('setupModal').classList.remove('hidden');
       lucide.createIcons();
     };
