@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crown & Conclave - Find the Thief (v1.5.3)</title>
+    <title>Crown & Conclave - Find the Thief (v1.6.0)</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -77,12 +77,72 @@
 
     <!-- Main React Application -->
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        const { useState, useEffect, useRef } = React;
 
-        const APP_VERSION = "v1.5.3";
+        const APP_VERSION = "v1.6.0";
         const BUILD_DATE = "2026-10-25";
 
-        // Pure React SVG Icon Component (Eliminates DOM mutation conflicts with React)
+        // Confetti Particle Engine Canvas Component
+        function ConfettiCanvas() {
+            const canvasRef = useRef(null);
+
+            useEffect(() => {
+                const canvas = canvasRef.current;
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+
+                const particles = [];
+                const colors = ['#f59e0b', '#ec4899', '#8b5cf6', '#10b981', '#3b82f6', '#ef4444'];
+
+                for (let i = 0; i < 120; i++) {
+                    particles.push({
+                        x: canvas.width / 2,
+                        y: canvas.height / 3,
+                        vx: (Math.random() - 0.5) * 16,
+                        vy: (Math.random() - 0.7) * 14 - 4,
+                        size: Math.random() * 8 + 4,
+                        color: colors[Math.floor(Math.random() * colors.length)],
+                        rotation: Math.random() * 360,
+                        vRot: (Math.random() - 0.5) * 10,
+                        gravity: 0.35,
+                        opacity: 1
+                    });
+                }
+
+                let animationId;
+                const render = () => {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    particles.forEach(p => {
+                        p.x += p.vx;
+                        p.y += p.vy;
+                        p.vy += p.gravity;
+                        p.rotation += p.vRot;
+                        p.opacity -= 0.008;
+
+                        ctx.save();
+                        ctx.translate(p.x, p.y);
+                        ctx.rotate((p.rotation * Math.PI) / 180);
+                        ctx.globalAlpha = Math.max(0, p.opacity);
+                        ctx.fillStyle = p.color;
+                        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+                        ctx.restore();
+                    });
+
+                    if (particles.some(p => p.opacity > 0)) {
+                        animationId = requestAnimationFrame(render);
+                    }
+                };
+                render();
+
+                return () => cancelAnimationFrame(animationId);
+            }, []);
+
+            return <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none z-50" />;
+        }
+
+        // Pure React SVG Icon Component
         function Icon({ name, className = "w-5 h-5" }) {
             const props = {
                 className,
@@ -360,6 +420,7 @@
             const [isSubmitting, setIsSubmitting] = useState(false);
             const [firebaseReady, setFirebaseReady] = useState(false);
             const [visitCount, setVisitCount] = useState(null);
+            const [showWinnerModal, setShowWinnerModal] = useState(false);
 
             useEffect(() => {
                 fetch('https://countapi.mileshilliard.com/api/v1/hit/project_hub_find_the_thief')
@@ -376,32 +437,37 @@
 
             useEffect(() => {
                 const handleFirebaseLoaded = () => {
-                    const firebaseConfig = typeof __firebase_config !== 'undefined'
-                        ? JSON.parse(__firebase_config)
-                        : { apiKey: "demo-key", authDomain: "demo.firebaseapp.com", projectId: "demo-project" };
+                    try {
+                        const firebaseConfig = typeof __firebase_config !== 'undefined'
+                            ? JSON.parse(__firebase_config)
+                            : { apiKey: "demo-key", authDomain: "demo.firebaseapp.com", projectId: "demo-project" };
 
-                    const app = window.firebase.initializeApp(firebaseConfig);
-                    window.auth = window.firebase.getAuth(app);
-                    window.db = window.firebase.getFirestore(app);
-                    window.appId = typeof __app_id !== 'undefined' ? __app_id : 'find-the-thief-app';
+                        const app = window.firebase.initializeApp(firebaseConfig);
+                        window.auth = window.firebase.getAuth(app);
+                        window.db = window.firebase.getFirestore(app);
+                        window.appId = typeof __app_id !== 'undefined' ? __app_id : 'find-the-thief-app';
 
-                    const initAuth = async () => {
-                        try {
-                            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                                await window.firebase.signInWithCustomToken(window.auth, __initial_auth_token);
-                            } else {
-                                await window.firebase.signInAnonymously(window.auth);
+                        const initAuth = async () => {
+                            try {
+                                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                                    await window.firebase.signInWithCustomToken(window.auth, __initial_auth_token);
+                                } else {
+                                    await window.firebase.signInAnonymously(window.auth);
+                                }
+                            } catch (err) {
+                                console.error("Auth init error:", err);
                             }
-                        } catch (err) {
-                            console.error("Auth init error:", err);
-                        }
-                    };
-                    initAuth();
+                        };
+                        initAuth();
 
-                    window.firebase.onAuthStateChanged(window.auth, (currentUser) => {
-                        setUser(currentUser);
+                        window.firebase.onAuthStateChanged(window.auth, (currentUser) => {
+                            setUser(currentUser);
+                            setFirebaseReady(true);
+                        });
+                    } catch (err) {
+                        console.error("Firebase startup fallback triggered:", err);
                         setFirebaseReady(true);
-                    });
+                    }
                 };
 
                 if (window.firebase) {
@@ -414,26 +480,34 @@
             useEffect(() => {
                 if (!user || !activeRoomCode || !window.db) return;
 
-                const roomRef = window.firebase.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'rooms', activeRoomCode);
-                const unsubscribe = window.firebase.onSnapshot(
-                    roomRef,
-                    (snapshot) => {
-                        if (snapshot.exists()) {
-                            setRoomData(snapshot.data());
-                        } else {
-                            setErrorMsg('Room no longer exists.');
-                            setActiveRoomCode('');
-                            setRoomData(null);
+                try {
+                    const roomRef = window.firebase.doc(window.db, 'artifacts', window.appId, 'public', 'data', 'rooms', activeRoomCode);
+                    const unsubscribe = window.firebase.onSnapshot(
+                        roomRef,
+                        (snapshot) => {
+                            if (snapshot.exists()) {
+                                const data = snapshot.data();
+                                if (roomData && roomData.status !== 'ROUND_END' && data.status === 'ROUND_END') {
+                                    setShowWinnerModal(true);
+                                }
+                                setRoomData(data);
+                            } else {
+                                setErrorMsg('Room no longer exists.');
+                                setActiveRoomCode('');
+                                setRoomData(null);
+                            }
+                        },
+                        (err) => {
+                            console.error("Firestore error:", err);
+                            setErrorMsg('Connection issue with game room.');
                         }
-                    },
-                    (err) => {
-                        console.error("Firestore error:", err);
-                        setErrorMsg('Connection issue with game room.');
-                    }
-                );
+                    );
 
-                return () => unsubscribe();
-            }, [user, activeRoomCode]);
+                    return () => unsubscribe();
+                } catch (err) {
+                    console.error("Snapshot error:", err);
+                }
+            }, [user, activeRoomCode, roomData]);
 
             useEffect(() => {
                 if (!user || !roomData || roomData.status !== 'PLAYING') return;
@@ -512,7 +586,7 @@
                     setActiveRoomCode(code);
                 } catch (err) {
                     console.error("Create room error:", err);
-                    setErrorMsg('Could not create room. Please try again.');
+                    setErrorMsg('Could not connect to Firebase. Check network or configuration.');
                 } finally {
                     setIsSubmitting(false);
                 }
@@ -625,6 +699,7 @@
                 const kingPlayer = dealtPlayers.find(p => p.roleId === 'KING');
                 const nextRoundNumber = isNextRound ? (roomData.round || 1) + 1 : (roomData.round || 1);
 
+                setShowWinnerModal(false);
                 await window.firebase.updateDoc(roomRef, {
                     status: 'PLAYING',
                     round: nextRoundNumber,
@@ -714,6 +789,7 @@
                             newLogs.unshift(`🔎 Now ${guessedPlayer.name} (${targetRole.name}) must find the ${nextTargetRole.name}!`);
                         }
 
+                        setShowWinnerModal(newStatus === 'ROUND_END');
                         await window.firebase.updateDoc(roomRef, {
                             status: newStatus,
                             currentStep: nextStep,
@@ -781,6 +857,7 @@
                 setActiveRoomCode('');
                 setRoomData(null);
                 setErrorMsg('');
+                setShowWinnerModal(false);
             };
 
             if (!firebaseReady) {
@@ -987,9 +1064,14 @@
             ).length : 0;
 
             const isLobby = roomData.status === 'LOBBY';
+            const roundWinner = roomData.status === 'ROUND_END'
+                ? [...roomData.players].sort((a, b) => (b.score || 0) - (a.score || 0))[0]
+                : null;
 
             return (
                 <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
+                    {showWinnerModal && <ConfettiCanvas />}
+
                     <header className="bg-slate-900/90 border-b border-slate-800 px-4 py-3 sticky top-0 z-30 backdrop-blur-md">
                         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
                             <div className="flex items-center gap-3">
@@ -1409,6 +1491,48 @@
                         </div>
                     </main>
 
+                    {/* Winner Celebration Modal */}
+                    {showWinnerModal && roundWinner && (
+                        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+                            <div className="bg-gradient-to-b from-slate-900 to-slate-950 border border-amber-500/50 rounded-3xl max-w-md w-full p-6 text-center space-y-5 shadow-2xl relative overflow-hidden">
+                                <div className="absolute -top-12 -right-12 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />
+                                
+                                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-slate-950 mx-auto shadow-lg shadow-amber-500/30 animate-bounce">
+                                    <Icon name="trophy" className="w-8 h-8" />
+                                </div>
+
+                                <div className="space-y-1">
+                                    <div className="text-xs font-bold uppercase tracking-widest text-amber-400">Round {roomData.round} Winner!</div>
+                                    <h3 className="text-2xl font-black text-white">{roundWinner.name} Crowned Victor</h3>
+                                    <p className="text-xs text-slate-400">{roomData.lastAction}</p>
+                                </div>
+
+                                <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
+                                    <div className="text-xs font-semibold text-slate-400 uppercase">Top Scorer's Total</div>
+                                    <div className="text-3xl font-black font-mono text-amber-300">{roundWinner.score || 0} pts</div>
+                                </div>
+
+                                <div className="flex gap-3 pt-2">
+                                    <button
+                                        onClick={() => setShowWinnerModal(false)}
+                                        className="flex-1 py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition"
+                                    >
+                                        View Board
+                                    </button>
+                                    {isHost && (
+                                        <button
+                                            onClick={() => handleStartRound(true)}
+                                            className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-extrabold text-xs shadow-lg shadow-amber-500/20 transition flex items-center justify-center gap-1.5"
+                                        >
+                                            <Icon name="rotate-ccw" className="w-4 h-4" />
+                                            <span>Next Round</span>
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {showRules && (
                         <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
                             <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
@@ -1423,7 +1547,7 @@
                                     <li><strong>Rank Order:</strong> King (1000) → Queen (900) → Bishop (800) → ... → Pawn (300) → Thief (0).</li>
                                     <li><strong>Correct Guess:</strong> Seeker scores points and locks in their card.</li>
                                     <li><strong>Wrong Guess & Swap:</strong> Seeker and suspect exchange cards! The previous seeker is ruled out for that rank.</li>
-                                    <li><strong>Final 2 Deduction:</strong> When only 2 players remain unlocked (Pawn & Thief), the round ends automatically.</li>
+                                    <li><strong>Final 2 Deduction:</strong> When only 2 players remain unlocked (Pawn & Thief), the round ends automatically!</li>
                                 </ul>
                             </div>
                         </div>
