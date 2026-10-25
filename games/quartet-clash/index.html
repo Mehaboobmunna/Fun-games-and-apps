@@ -133,9 +133,9 @@
       </button>
 
       <!-- Leave Game Button -->
-      <button id="leaveGameHeaderBtn" class="px-2.5 py-1.5 rounded-lg bg-rose-950/80 hover:bg-rose-900 border border-rose-600/50 text-rose-300 font-semibold text-xs flex items-center gap-1.5 transition shadow-sm" title="Leave the current game">
+      <button id="leaveGameHeaderBtn" class="px-2.5 py-1.5 rounded-lg bg-rose-950/80 hover:bg-rose-900 border border-rose-600/50 text-rose-300 font-semibold text-xs flex items-center gap-1.5 transition shadow-sm" title="Quit game and return to games list">
         <i data-lucide="log-out" class="w-4 h-4 text-rose-400"></i>
-        <span class="hidden sm:inline">Leave</span>
+        <span class="hidden sm:inline">Quit</span>
       </button>
     </div>
   </header>
@@ -268,7 +268,7 @@
             <p class="text-xs text-slate-400">Configure players & themes</p>
           </div>
         </div>
-        <button id="closeSetupModalBtn" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition border border-slate-700" title="Exit / Close">
+        <button id="setupModalExitBtn" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition border border-slate-700" title="Quit to games list">
           <i data-lucide="x" class="w-4 h-4"></i>
         </button>
       </div>
@@ -350,7 +350,7 @@
       <div class="pt-3 flex items-center gap-2.5">
         <button id="setupQuitBtn" class="flex-1 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-rose-300 border border-rose-900/60 font-bold text-xs tracking-wide transition flex items-center justify-center gap-1.5 shadow">
           <i data-lucide="log-out" class="w-4 h-4 text-rose-400"></i>
-          <span>Quit Game</span>
+          <span>Quit to Games</span>
         </button>
         <button id="startGameSubmit" class="flex-[1.5] py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-sm tracking-wide shadow-lg shadow-emerald-500/20 transition">
           Deal Cards & Clash
@@ -386,9 +386,9 @@
 
       <!-- Action buttons: Next Round & Quit/Exit -->
       <div class="pt-2 flex items-center gap-2.5">
-        <button id="quitMatchBtn" class="flex-1 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-rose-300 border border-rose-900/60 font-bold text-xs sm:text-sm tracking-wide transition flex items-center justify-center gap-1.5 shadow">
+        <button id="quitMatchBtn" class="flex-1 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-rose-300 border border-rose-900/60 font-bold text-xs sm:text-sm tracking-wide transition flex items-center justify-center gap-1.5 shadow" title="Quit to games list">
           <i data-lucide="log-out" class="w-4 h-4 text-rose-400"></i>
-          <span>Quit Game</span>
+          <span>Quit to Games</span>
         </button>
         <button id="nextRoundBtn" class="flex-[1.5] py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs sm:text-sm tracking-wide shadow-lg transition flex items-center justify-center gap-1.5">
           <span>Next Round (Dealer Shifts ➔)</span>
@@ -423,9 +423,9 @@
         <i data-lucide="alert-triangle" class="w-7 h-7"></i>
       </div>
       <div>
-        <h3 class="text-base font-bold text-white">Leave Current Game?</h3>
+        <h3 class="text-base font-bold text-white">Quit to Games List?</h3>
         <p id="leaveModalSubText" class="text-xs text-slate-400 mt-1">
-          Leaving will end your active session and return to game setup.
+          Leaving will end your active game and return to the main games directory.
         </p>
       </div>
       <div class="flex items-center gap-2.5 pt-2">
@@ -433,7 +433,7 @@
           Stay in Game
         </button>
         <button id="confirmLeaveBtn" class="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-black text-xs transition shadow-lg shadow-rose-600/20">
-          Yes, Leave
+          Yes, Quit
         </button>
       </div>
     </div>
@@ -1077,6 +1077,17 @@
       }, 2200);
     }
 
+    function returnToGamesList() {
+      clearTimeout(state.botTimer);
+      state.isRoundActive = false;
+      if (onlineRoomUnsubscribe) {
+        onlineRoomUnsubscribe();
+        onlineRoomUnsubscribe = null;
+      }
+      // Navigate back to the games directory or parent home page
+      window.location.href = '../index.html';
+    }
+
     function setupEventListeners() {
       document.querySelectorAll('.player-count-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -1114,14 +1125,8 @@
         startNewRound();
       });
 
-      document.getElementById('closeSetupModalBtn').addEventListener('click', () => {
-        document.getElementById('setupModal').classList.add('hidden');
-      });
-
-      document.getElementById('setupQuitBtn').addEventListener('click', async () => {
-        document.getElementById('setupModal').classList.add('hidden');
-        await performLeaveGame();
-      });
+      document.getElementById('setupModalExitBtn').addEventListener('click', returnToGamesList);
+      document.getElementById('setupQuitBtn').addEventListener('click', returnToGamesList);
 
       document.getElementById('newGameHeaderBtn').addEventListener('click', () => {
         clearTimeout(state.botTimer);
@@ -1174,18 +1179,9 @@
         }
       });
 
-      document.getElementById('quitMatchBtn').addEventListener('click', async () => {
-        document.getElementById('roundEndModal').classList.add('hidden');
-        await performLeaveGame();
-      });
+      document.getElementById('quitMatchBtn').addEventListener('click', returnToGamesList);
 
       document.getElementById('leaveGameHeaderBtn').addEventListener('click', () => {
-        const subText = document.getElementById('leaveModalSubText');
-        if (state.playMode === 'online' && currentOnlineRoomId) {
-          subText.textContent = `You are connected to Online Room ${currentOnlineRoomId}. Leaving will remove you from this room.`;
-        } else {
-          subText.textContent = 'Leaving will reset the current match and return to game setup.';
-        }
         document.getElementById('leaveConfirmModal').classList.remove('hidden');
         lucide.createIcons();
       });
@@ -1194,10 +1190,7 @@
         document.getElementById('leaveConfirmModal').classList.add('hidden');
       });
 
-      document.getElementById('confirmLeaveBtn').addEventListener('click', async () => {
-        document.getElementById('leaveConfirmModal').classList.add('hidden');
-        await performLeaveGame();
-      });
+      document.getElementById('confirmLeaveBtn').addEventListener('click', returnToGamesList);
 
       document.getElementById('readyRevealHandBtn').addEventListener('click', () => {
         document.getElementById('passAndPlayModal').classList.add('hidden');
@@ -1228,7 +1221,7 @@
         });
       });
       document.getElementById('startOnlineMatchBtn').addEventListener('click', handleStartOnlineMatch);
-      document.getElementById('leaveOnlineRoomBtn').addEventListener('click', handleLeaveOnlineRoom);
+      document.getElementById('leaveOnlineRoomBtn').addEventListener('click', returnToGamesList);
     }
 
     function handlePassButtonClick() {
@@ -1417,59 +1410,6 @@
         hostControls.classList.add('hidden');
         guestNotice.classList.remove('hidden');
       }
-    }
-
-    async function performLeaveGame() {
-      clearTimeout(state.botTimer);
-      state.isRoundActive = false;
-
-      if (state.playMode === 'online' && currentOnlineRoomId && db && currentAuthUser) {
-        try {
-          const roomDocRef = window.FirebaseModule.doc(db, 'artifacts', appId, 'public', 'data', 'game_rooms', currentOnlineRoomId);
-          const snap = await window.FirebaseModule.getDoc(roomDocRef);
-          if (snap.exists()) {
-            const roomData = snap.data();
-            const updatedPlayers = (roomData.players || []).filter(p => p.uid !== currentAuthUser.uid);
-            updatedPlayers.forEach((p, idx) => { p.seatIndex = idx; });
-
-            if (updatedPlayers.length === 0) {
-              await window.FirebaseModule.setDoc(roomDocRef, { ...roomData, status: 'closed', players: [] });
-            } else {
-              const newHostUid = (roomData.hostUid === currentAuthUser.uid) ? updatedPlayers[0].uid : roomData.hostUid;
-              updatedPlayers[0].isHost = (updatedPlayers[0].uid === newHostUid);
-
-              await window.FirebaseModule.updateDoc(roomDocRef, {
-                hostUid: newHostUid,
-                players: updatedPlayers,
-                turnIndex: roomData.turnIndex % updatedPlayers.length
-              });
-            }
-          }
-        } catch (err) {
-          console.warn('Error during room departure:', err);
-        }
-      }
-
-      if (onlineRoomUnsubscribe) {
-        onlineRoomUnsubscribe();
-        onlineRoomUnsubscribe = null;
-      }
-
-      currentOnlineRoomId = null;
-      state.isOnlineHost = false;
-      state.playMode = 'bots';
-
-      document.getElementById('roundEndModal').classList.add('hidden');
-      document.getElementById('onlineLobbyModal').classList.add('hidden');
-      document.getElementById('passAndPlayModal').classList.add('hidden');
-      document.getElementById('setupModal').classList.remove('hidden');
-
-      updateStatusToast('Returned to main menu.');
-      lucide.createIcons();
-    }
-
-    function handleLeaveOnlineRoom() {
-      performLeaveGame();
     }
 
     async function handleStartOnlineMatch() {
