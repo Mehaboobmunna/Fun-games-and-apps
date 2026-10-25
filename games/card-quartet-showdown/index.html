@@ -81,9 +81,9 @@
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between overflow-x-hidden">
-<a href="../" style="color: #38bdf8; text-decoration: none; font-size: 0.85rem;">&larr; Back to Games</a>
+
   <!-- ================= HEADER BAR ================= -->
-  <header class="w-full bg-slate-900/90 border-b border-emerald-900/40 backdrop-blur-md px-4 py-3 sticky top-0 z-40 flex items-center justify-between">
+  <header class="w-full bg-slate-900/90 border-b border-emerald-900/40 backdrop-blur-md px-3 sm:px-4 py-2.5 sticky top-0 z-40 flex items-center justify-between">
     <!-- Brand / Title -->
     <div class="flex items-center space-x-2">
       <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/20 text-slate-950 font-black text-lg">
@@ -100,7 +100,7 @@
     </div>
 
     <!-- Controls -->
-    <div class="flex items-center space-x-2">
+    <div class="flex items-center space-x-1.5 sm:space-x-2">
       <!-- Multiplayer Online Lobby Button -->
       <button id="onlineLobbyHeaderBtn" class="px-2.5 py-1.5 rounded-lg bg-emerald-950/80 hover:bg-emerald-900 text-xs font-semibold flex items-center gap-1.5 transition text-emerald-300 border border-emerald-600/50 shadow-sm" title="Play online with friends across devices">
         <i data-lucide="globe" class="w-4 h-4 text-emerald-400"></i>
@@ -108,7 +108,7 @@
       </button>
 
       <!-- Card Vault (Cached Decks) -->
-      <button id="cardVaultHeaderBtn" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold flex items-center gap-1.5 transition text-amber-300 border border-slate-700" title="View pre-generated cached card vault">
+      <button id="cardVaultHeaderBtn" class="px-2 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold flex items-center gap-1.5 transition text-amber-300 border border-slate-700" title="View pre-generated cached card vault">
         <i data-lucide="archive" class="w-4 h-4 text-amber-400"></i>
         <span class="hidden md:inline">Vault</span>
       </button>
@@ -120,7 +120,7 @@
       </button>
 
       <!-- Rules Button -->
-      <button id="rulesHeaderBtn" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold flex items-center gap-1.5 transition text-slate-300 border border-slate-700">
+      <button id="rulesHeaderBtn" class="px-2 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold flex items-center gap-1.5 transition text-slate-300 border border-slate-700">
         <i data-lucide="help-circle" class="w-4 h-4 text-amber-400"></i>
         <span class="hidden sm:inline">Rules</span>
       </button>
@@ -128,7 +128,13 @@
       <!-- New Game / Setup Button -->
       <button id="newGameHeaderBtn" class="px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 transition shadow-md shadow-emerald-500/20">
         <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
-        <span>New Game</span>
+        <span>New</span>
+      </button>
+
+      <!-- Leave Game Button (Active Game / Online) -->
+      <button id="leaveGameHeaderBtn" class="px-2.5 py-1.5 rounded-lg bg-rose-950/80 hover:bg-rose-900 border border-rose-600/50 text-rose-300 font-semibold text-xs flex items-center gap-1.5 transition shadow-sm" title="Leave the current game">
+        <i data-lucide="log-out" class="w-4 h-4 text-rose-400"></i>
+        <span class="hidden sm:inline">Leave</span>
       </button>
     </div>
   </header>
@@ -247,6 +253,67 @@
         <button id="readyRevealHandBtn" class="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-sm tracking-wide shadow-lg shadow-emerald-500/20 transition">
           I am Ready — Show My Hand
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cloud / Firebase Setup Modal (Zero Secrets in GitHub!) -->
+  <div id="cloudConfigModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md hidden">
+    <div class="bg-slate-900 border border-cyan-500/40 rounded-3xl p-6 sm:p-7 max-w-lg w-full shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-cyan-900/40">
+        <div class="flex items-center gap-2">
+          <i data-lucide="cloud" class="w-5 h-5 text-cyan-400"></i>
+          <div>
+            <h3 class="text-base font-bold text-white">Cloud Multiplayer Configuration</h3>
+            <p class="text-[11px] text-slate-400">Keys are stored securely in your browser's LocalStorage</p>
+          </div>
+        </div>
+        <button id="closeCloudConfigBtn" class="text-slate-400 hover:text-white">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs text-slate-300">
+        <p class="text-[11px] text-slate-400 leading-relaxed">
+          To prevent GitHub secret alerts, you can paste your Firebase credentials directly here into the browser instead of writing them into the code file.
+        </p>
+
+        <!-- JSON Paste Option -->
+        <div class="space-y-1">
+          <label class="block font-bold text-cyan-300">Quick Paste: FirebaseConfig Object or JSON</label>
+          <textarea id="rawConfigPasteInput" rows="4" placeholder='{"apiKey": "AIzaSy...", "authDomain": "...", "projectId": "..."}' class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-xs text-white font-mono focus:outline-none focus:border-cyan-400"></textarea>
+          <button id="parseRawConfigBtn" class="px-3 py-1 bg-cyan-950/70 hover:bg-cyan-900 border border-cyan-700/50 rounded-lg text-cyan-300 text-[11px] font-semibold transition">
+            Auto-Fill From Text
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+          <div>
+            <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">API Key</label>
+            <input id="cfgApiKey" type="text" placeholder="AIzaSy..." class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-400 font-mono">
+          </div>
+          <div>
+            <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Auth Domain</label>
+            <input id="cfgAuthDomain" type="text" placeholder="my-app.firebaseapp.com" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-400 font-mono">
+          </div>
+          <div>
+            <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Project ID</label>
+            <input id="cfgProjectId" type="text" placeholder="my-project-id" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-400 font-mono">
+          </div>
+          <div>
+            <label class="block text-[10px] uppercase font-bold text-slate-400 mb-1">App ID</label>
+            <input id="cfgAppId" type="text" placeholder="1:123456789:web:abcdef" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-400 font-mono">
+          </div>
+        </div>
+
+        <div class="pt-3 flex gap-2">
+          <button id="saveCloudConfigBtn" class="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-slate-950 font-black text-xs transition shadow-lg">
+            Save & Connect Cloud
+          </button>
+          <button id="clearCloudConfigBtn" class="px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-rose-300 font-bold text-xs border border-slate-700 transition">
+            Clear
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -404,6 +471,29 @@
     </div>
   </div>
 
+  <!-- Leave Game Confirmation Modal -->
+  <div id="leaveConfirmModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md hidden">
+    <div class="bg-slate-900 border border-rose-500/40 rounded-3xl p-6 sm:p-7 max-w-sm w-full shadow-2xl space-y-4 text-center">
+      <div class="w-14 h-14 mx-auto rounded-2xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-rose-400">
+        <i data-lucide="alert-triangle" class="w-7 h-7"></i>
+      </div>
+      <div>
+        <h3 class="text-base font-bold text-white">Leave Current Game?</h3>
+        <p id="leaveModalSubText" class="text-xs text-slate-400 mt-1">
+          Are you sure you want to leave this game? Your cards will be discarded and you will return to the main menu.
+        </p>
+      </div>
+      <div class="flex items-center gap-2.5 pt-2">
+        <button id="cancelLeaveBtn" class="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition border border-slate-700">
+          Stay in Game
+        </button>
+        <button id="confirmLeaveBtn" class="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-black text-xs transition shadow-lg shadow-rose-600/20">
+          Yes, Leave
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Rules Modal -->
   <div id="rulesModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md hidden">
     <div class="bg-slate-900 border border-emerald-500/40 rounded-3xl p-6 sm:p-7 max-w-lg w-full shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
@@ -449,9 +539,9 @@
           <div>
             <div class="flex items-center gap-2">
               <h3 class="text-base font-bold text-white">Online Card Vault</h3>
-              <span id="cloudStatusBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-semibold flex items-center gap-1">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span>Cloud Synced</span>
+              <span id="cloudStatusBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700 font-semibold flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                <span>Local Only</span>
               </span>
             </div>
             <p class="text-[11px] text-slate-400">Cards are stored in the shared cloud catalog and retrieved across all multiplayer matches.</p>
@@ -607,15 +697,15 @@
 
   <!-- Firebase SDK imports -->
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     window.FirebaseModule = {
       initializeApp,
+      getApps,
       getAuth,
       signInAnonymously,
-      signInWithCustomToken,
       onAuthStateChanged,
       getFirestore,
       doc,
@@ -845,8 +935,19 @@
     }
 
     /* -------------------------------------------------------------
-       CLOUD BACKEND & STORAGE (Firestore Rules Compliant)
+       FIREBASE CLOUD BACKEND CONFIGURATION
+       Paste your Firebase configuration object below.
+       All players opening your site will automatically connect!
     ------------------------------------------------------------- */
+    const DEFAULT_FIREBASE_CONFIG = {
+      apiKey: "PASTE_YOUR_API_KEY_HERE",
+      authDomain: "PASTE_YOUR_AUTH_DOMAIN_HERE",
+      projectId: "PASTE_YOUR_PROJECT_ID_HERE",
+      storageBucket: "PASTE_YOUR_STORAGE_BUCKET_HERE",
+      messagingSenderId: "PASTE_YOUR_MESSAGING_SENDER_ID_HERE",
+      appId: "PASTE_YOUR_APP_ID_HERE"
+    };
+
     const appId = 'card-quartet-game';
     let db = null;
     let auth = null;
@@ -856,54 +957,47 @@
 
     async function initCloudBackend() {
       if (!window.FirebaseModule) return;
-      try {
-        /* =============================================================
-           PASTE YOUR FIREBASE CONFIGURATION OBJECT HERE
-           (Replace the placeholder values with your project credentials)
-        ============================================================= */
-const firebaseConfig = {
-  apiKey: "AIzaSyAkqMyw44KFlNiyEGYvQIjBpR_rFYeD0Ew",
-  authDomain: "card-quartet-game.firebaseapp.com",
-  projectId: "card-quartet-game",
-  storageBucket: "card-quartet-game.firebasestorage.app",
-  messagingSenderId: "50390439816",
-  appId: "1:50390439816:web:89095d247d8d9347fa8c3d"
-};
 
-        // Fallback guard if placeholder hasn't been replaced yet
-        if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "PASTE_YOUR_API_KEY_HERE") {
-          console.log('Firebase configuration is using placeholder values. Please update firebaseConfig inside initCloudBackend().');
-          const badge = document.getElementById('cloudStatusBadge');
-          if (badge) {
-            badge.innerHTML = `
-              <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
-              <span>Needs Config</span>
-            `;
-          }
-          return;
+      const badge = document.getElementById('cloudStatusBadge');
+      
+      // Check if config has been populated
+      if (!DEFAULT_FIREBASE_CONFIG.apiKey || DEFAULT_FIREBASE_CONFIG.apiKey.includes("PASTE_YOUR")) {
+        console.warn("Firebase config not yet populated in DEFAULT_FIREBASE_CONFIG.");
+        if (badge) {
+          badge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700 font-semibold flex items-center gap-1';
+          badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span><span>Local Only</span>`;
+        }
+        return;
+      }
+
+      try {
+        let app;
+        const existingApps = window.FirebaseModule.getApps ? window.FirebaseModule.getApps() : [];
+        if (existingApps.length > 0) {
+          app = existingApps[0];
+        } else {
+          app = window.FirebaseModule.initializeApp(DEFAULT_FIREBASE_CONFIG);
         }
 
-        const app = window.FirebaseModule.initializeApp(firebaseConfig);
         auth = window.FirebaseModule.getAuth(app);
         db = window.FirebaseModule.getFirestore(app);
 
         await window.FirebaseModule.signInAnonymously(auth);
         currentAuthUser = auth.currentUser;
-        console.log('Cloud Backend Initialized! Signed in anonymously with UID:', currentAuthUser?.uid);
+        console.log('Safe Cloud Connected! UID:', currentAuthUser?.uid);
 
-        // Update vault status badge
-        const badge = document.getElementById('cloudStatusBadge');
         if (badge) {
-          badge.innerHTML = `
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span>Cloud Connected</span>
-          `;
+          badge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-semibold flex items-center gap-1';
+          badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span><span>Cloud Connected</span>`;
         }
 
-        // Sync active theme catalog with cloud
         await cardVault.syncThemeWithCloud(state.themeKey);
       } catch (err) {
         console.warn('Cloud backend initialization fallback:', err);
+        if (badge) {
+          badge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 font-semibold flex items-center gap-1';
+          badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span><span>Config Error</span>`;
+        }
       }
     }
 
@@ -974,11 +1068,9 @@ const firebaseConfig = {
         return deck;
       }
 
-      /* Cloud Persistence: Store theme cards in cloud public catalog */
       async syncThemeWithCloud(themeKey) {
         if (!db || !currentAuthUser) return;
         try {
-          // Public Catalog Collection: /artifacts/{appId}/public/data/card_catalogs
           const docRef = window.FirebaseModule.doc(db, 'artifacts', appId, 'public', 'data', 'card_catalogs', themeKey);
           const snap = await window.FirebaseModule.getDoc(docRef);
 
@@ -991,20 +1083,17 @@ const firebaseConfig = {
             }
           }
 
-          // If not in cloud, seed the pre-generated cards to the cloud catalog
           const localDeck = this.cache[themeKey] || this.buildThemeDeck(themeKey, THEMES[themeKey] || THEMES.animals);
           await window.FirebaseModule.setDoc(docRef, {
             theme: themeKey,
             cards: localDeck,
             updatedAt: Date.now()
           });
-          console.log(`Seeded cloud card catalog for theme: ${themeKey}`);
         } catch (e) {
-          console.warn('Cloud sync error for theme:', themeKey, e);
+          console.warn('Cloud sync note for theme:', themeKey, e);
         }
       }
 
-      /* Retrieve pre-generated cards for a game round */
       getDeckForRound(themeKey, playerCount) {
         if (!this.cache[themeKey]) {
           this.ensureAllThemesGenerated();
@@ -1061,7 +1150,6 @@ const firebaseConfig = {
       isOnlineHost: false
     };
 
-    /* Helper: Array Shuffle */
     function shuffle(array) {
       const arr = [...array];
       for (let i = arr.length - 1; i > 0; i--) {
@@ -1085,10 +1173,10 @@ const firebaseConfig = {
     }
 
     /* -------------------------------------------------------------
-       SETUP & ROUND INITIALIZATION
+       SETUP & LISTENERS
     ------------------------------------------------------------- */
     function setupEventListeners() {
-      // Player count selector buttons in Setup Modal
+      // Player count selector
       document.querySelectorAll('.player-count-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           document.querySelectorAll('.player-count-btn').forEach(b => {
@@ -1145,6 +1233,15 @@ const firebaseConfig = {
         document.getElementById('rulesModal').classList.add('hidden');
       });
 
+      // Cloud Config Modal Listeners
+      document.getElementById('cloudConfigHeaderBtn').addEventListener('click', openCloudConfigModal);
+      document.getElementById('closeCloudConfigBtn').addEventListener('click', () => {
+        document.getElementById('cloudConfigModal').classList.add('hidden');
+      });
+      document.getElementById('parseRawConfigBtn').addEventListener('click', parseRawConfigInput);
+      document.getElementById('saveCloudConfigBtn').addEventListener('click', handleSaveCloudConfig);
+      document.getElementById('clearCloudConfigBtn').addEventListener('click', handleClearCloudConfig);
+
       // Card Vault Modal
       document.getElementById('cardVaultHeaderBtn').addEventListener('click', openCardVaultModal);
       document.getElementById('closeVaultBtn').addEventListener('click', () => {
@@ -1189,6 +1286,27 @@ const firebaseConfig = {
         }
       });
 
+      // Leave Game Header & Modal Handlers
+      document.getElementById('leaveGameHeaderBtn').addEventListener('click', () => {
+        const subText = document.getElementById('leaveModalSubText');
+        if (state.playMode === 'online' && currentOnlineRoomId) {
+          subText.textContent = `You are connected to Online Room ${currentOnlineRoomId}. Leaving will remove you from this room.`;
+        } else {
+          subText.textContent = 'Leaving will reset the current match and return to game setup.';
+        }
+        document.getElementById('leaveConfirmModal').classList.remove('hidden');
+        lucide.createIcons();
+      });
+
+      document.getElementById('cancelLeaveBtn').addEventListener('click', () => {
+        document.getElementById('leaveConfirmModal').classList.add('hidden');
+      });
+
+      document.getElementById('confirmLeaveBtn').addEventListener('click', async () => {
+        document.getElementById('leaveConfirmModal').classList.add('hidden');
+        await performLeaveGame();
+      });
+
       // Pass & Play Ready Button
       document.getElementById('readyRevealHandBtn').addEventListener('click', () => {
         document.getElementById('passAndPlayModal').classList.add('hidden');
@@ -1226,6 +1344,78 @@ const firebaseConfig = {
     }
 
     /* -------------------------------------------------------------
+       IN-APP CLOUD CONFIGURATION MODAL (ZERO SECRETS IN CODE)
+    ------------------------------------------------------------- */
+    function openCloudConfigModal() {
+      const cfg = getStoredCloudConfig() || {};
+      document.getElementById('cfgApiKey').value = cfg.apiKey || '';
+      document.getElementById('cfgAuthDomain').value = cfg.authDomain || '';
+      document.getElementById('cfgProjectId').value = cfg.projectId || '';
+      document.getElementById('cfgAppId').value = cfg.appId || '';
+      document.getElementById('cloudConfigModal').classList.remove('hidden');
+      lucide.createIcons();
+    }
+
+    function parseRawConfigInput() {
+      const raw = document.getElementById('rawConfigPasteInput').value;
+      if (!raw) return;
+
+      const extractVal = (key) => {
+        const match = raw.match(new RegExp(`${key}["']?\\s*:\\s*["']([^"']+)["']`));
+        return match ? match[1] : '';
+      };
+
+      const apiKey = extractVal('apiKey');
+      const authDomain = extractVal('authDomain');
+      const projectId = extractVal('projectId');
+      const appIdVal = extractVal('appId');
+
+      if (apiKey) document.getElementById('cfgApiKey').value = apiKey;
+      if (authDomain) document.getElementById('cfgAuthDomain').value = authDomain;
+      if (projectId) document.getElementById('cfgProjectId').value = projectId;
+      if (appIdVal) document.getElementById('cfgAppId').value = appIdVal;
+
+      updateStatusToast('Pasted values extracted!');
+    }
+
+    async function handleSaveCloudConfig() {
+      const config = {
+        apiKey: document.getElementById('cfgApiKey').value.trim(),
+        authDomain: document.getElementById('cfgAuthDomain').value.trim(),
+        projectId: document.getElementById('cfgProjectId').value.trim(),
+        appId: document.getElementById('cfgAppId').value.trim()
+      };
+
+      if (!config.apiKey || !config.projectId) {
+        updateStatusToast('Please enter at least an API Key and Project ID.');
+        return;
+      }
+
+      saveStoredCloudConfig(config);
+      updateStatusToast('Connecting to Cloud...');
+      document.getElementById('cloudConfigModal').classList.add('hidden');
+      await initCloudBackend();
+    }
+
+    function handleClearCloudConfig() {
+      localStorage.removeItem(FIREBASE_USER_CONFIG_KEY);
+      document.getElementById('cfgApiKey').value = '';
+      document.getElementById('cfgAuthDomain').value = '';
+      document.getElementById('cfgProjectId').value = '';
+      document.getElementById('cfgAppId').value = '';
+      document.getElementById('rawConfigPasteInput').value = '';
+      db = null;
+      auth = null;
+      currentAuthUser = null;
+      const badge = document.getElementById('cloudStatusBadge');
+      if (badge) {
+        badge.className = 'text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700 font-semibold flex items-center gap-1';
+        badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span><span>Local Only</span>`;
+      }
+      updateStatusToast('Cleared Cloud Credentials from browser.');
+    }
+
+    /* -------------------------------------------------------------
        ONLINE MULTIPLAYER ROOM ENGINE
     ------------------------------------------------------------- */
     function openOnlineLobby() {
@@ -1248,7 +1438,8 @@ const firebaseConfig = {
 
     async function handleCreateOnlineRoom() {
       if (!db || !currentAuthUser) {
-        updateStatusToast('Connect your Firebase keys in index.html to host online rooms.');
+        updateStatusToast('Configure Cloud Config first (top header ⚙️)');
+        openCloudConfigModal();
         return;
       }
       const pName = document.getElementById('onlinePlayerNameInput').value.trim() || 'Host';
@@ -1300,14 +1491,15 @@ const firebaseConfig = {
 
     async function handleJoinOnlineRoom() {
       if (!db || !currentAuthUser) {
-        updateStatusToast('Connect your Firebase keys in index.html to join online rooms.');
+        updateStatusToast('Configure Cloud Config first (top header ⚙️)');
+        openCloudConfigModal();
         return;
       }
       const code = document.getElementById('roomCodeInput').value.trim().toUpperCase();
       const pName = document.getElementById('onlinePlayerNameInput').value.trim() || 'Player';
 
       if (code.length !== 6) {
-        updateStatusToast('Please enter a valid 6-character room code.');
+        updateStatusToast('Please enter a 6-character room code.');
         return;
       }
 
@@ -1316,7 +1508,7 @@ const firebaseConfig = {
         const snap = await window.FirebaseModule.getDoc(roomDocRef);
 
         if (!snap.exists()) {
-          updateStatusToast('Room not found! Check the code.');
+          updateStatusToast('Room not found! Check code.');
           return;
         }
 
@@ -1397,18 +1589,68 @@ const firebaseConfig = {
       }
     }
 
-    function handleLeaveOnlineRoom() {
+    async function performLeaveGame() {
+      clearTimeout(state.botTimer);
+      state.isRoundActive = false;
+
+      // Handle Online Multiplayer Room departure
+      if (state.playMode === 'online' && currentOnlineRoomId && db && currentAuthUser) {
+        try {
+          const roomDocRef = window.FirebaseModule.doc(db, 'artifacts', appId, 'public', 'data', 'game_rooms', currentOnlineRoomId);
+          const snap = await window.FirebaseModule.getDoc(roomDocRef);
+          if (snap.exists()) {
+            const roomData = snap.data();
+            const updatedPlayers = (roomData.players || []).filter(p => p.uid !== currentAuthUser.uid);
+            
+            // Re-index remaining seat numbers
+            updatedPlayers.forEach((p, idx) => {
+              p.seatIndex = idx;
+            });
+
+            if (updatedPlayers.length === 0) {
+              // Last player left: clean up or leave empty
+              await window.FirebaseModule.setDoc(roomDocRef, {
+                ...roomData,
+                status: 'closed',
+                players: []
+              });
+            } else {
+              const newHostUid = (roomData.hostUid === currentAuthUser.uid) ? updatedPlayers[0].uid : roomData.hostUid;
+              updatedPlayers[0].isHost = (updatedPlayers[0].uid === newHostUid);
+
+              await window.FirebaseModule.updateDoc(roomDocRef, {
+                hostUid: newHostUid,
+                players: updatedPlayers,
+                turnIndex: roomData.turnIndex % updatedPlayers.length
+              });
+            }
+          }
+        } catch (err) {
+          console.warn('Error during room departure:', err);
+        }
+      }
+
       if (onlineRoomUnsubscribe) {
         onlineRoomUnsubscribe();
         onlineRoomUnsubscribe = null;
       }
+
       currentOnlineRoomId = null;
+      state.isOnlineHost = false;
       state.playMode = 'bots';
-      document.getElementById('liveRoomLobby').classList.add('hidden');
-      document.getElementById('onlineRoomChoice').classList.remove('hidden');
+
+      // Reset modals and display setup modal
+      document.getElementById('roundEndModal').classList.add('hidden');
       document.getElementById('onlineLobbyModal').classList.add('hidden');
-      startNewRound();
-      updateStatusToast('Left online room.');
+      document.getElementById('passAndPlayModal').classList.add('hidden');
+      document.getElementById('setupModal').classList.remove('hidden');
+
+      updateStatusToast('Left the game.');
+      lucide.createIcons();
+    }
+
+    function handleLeaveOnlineRoom() {
+      performLeaveGame();
     }
 
     async function handleStartOnlineMatch() {
