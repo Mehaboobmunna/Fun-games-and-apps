@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crown & Conclave - Find the Thief (v1.5.2)</title>
+    <title>Crown & Conclave - Find the Thief (v1.5.3)</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -79,7 +79,7 @@
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        const APP_VERSION = "v1.5.2";
+        const APP_VERSION = "v1.5.3";
         const BUILD_DATE = "2026-10-25";
 
         // Pure React SVG Icon Component (Eliminates DOM mutation conflicts with React)
@@ -359,6 +359,20 @@
             const [showRules, setShowRules] = useState(false);
             const [isSubmitting, setIsSubmitting] = useState(false);
             const [firebaseReady, setFirebaseReady] = useState(false);
+            const [visitCount, setVisitCount] = useState(null);
+
+            useEffect(() => {
+                fetch('https://countapi.mileshilliard.com/api/v1/hit/project_hub_find_the_thief')
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data && typeof data.value !== 'undefined') {
+                            setVisitCount(data.value);
+                        } else if (data && typeof data.count !== 'undefined') {
+                            setVisitCount(data.count);
+                        }
+                    })
+                    .catch(() => {});
+            }, []);
 
             useEffect(() => {
                 const handleFirebaseLoaded = () => {
@@ -801,13 +815,22 @@
                                 </div>
                             </div>
 
-                            <button
-                                onClick={() => setShowRules(!showRules)}
-                                className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-sm text-slate-300 transition"
-                            >
-                                <Icon name="help-circle" className="w-4 h-4 text-amber-400" />
-                                <span>How to Play</span>
-                            </button>
+                            <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-300">
+                                    <Icon name="eye" className="w-3.5 h-3.5 text-amber-400" />
+                                    <span>Visits:</span>
+                                    <span className="font-mono font-bold text-amber-300">
+                                        {visitCount !== null ? visitCount.toLocaleString() : '...'}
+                                    </span>
+                                </div>
+                                <button
+                                    onClick={() => setShowRules(!showRules)}
+                                    className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 text-sm text-slate-300 transition"
+                                >
+                                    <Icon name="help-circle" className="w-4 h-4 text-amber-400" />
+                                    <span>How to Play</span>
+                                </button>
+                            </div>
                         </header>
 
                         <main className="max-w-4xl w-full mx-auto my-auto py-8 grid md:grid-cols-12 gap-8 items-center">
@@ -930,7 +953,12 @@
 
                         <footer className="max-w-5xl w-full mx-auto text-center text-xs text-slate-600 py-2 flex flex-col sm:flex-row items-center justify-between gap-2">
                             <span>Tip: Invite friends using the Room Code or add Royal AI Bots in the lobby!</span>
-                            <span className="font-mono text-[11px] text-slate-500">Build {APP_VERSION} ({BUILD_DATE})</span>
+                            <div className="flex items-center gap-3">
+                                <span className="font-mono text-[11px] text-slate-400">
+                                    Court Visits: <strong className="text-amber-400">{visitCount !== null ? visitCount.toLocaleString() : '...'}</strong>
+                                </span>
+                                <span className="font-mono text-[11px] text-slate-500">Build {APP_VERSION} ({BUILD_DATE})</span>
+                            </div>
                         </footer>
                     </div>
                 );
