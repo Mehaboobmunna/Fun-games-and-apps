@@ -24,90 +24,109 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
+        .top-nav {
+            margin-bottom: 1.5rem;
+        }
+        .top-nav a {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #94a3b8;
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+        .top-nav a:hover {
+            color: #f8fafc;
+        }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 relative">
-    <!-- Top Navigation / Go Back Button -->
-    <nav class="top-nav">
-      <a href="../">&larr; Back to Apps Hub</a>
-    </nav>
 
-    <div class="w-full max-w-2xl bg-slate-900/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-800 overflow-hidden mt-16 sm:mt-0">
-        <!-- Header -->
-        <div class="bg-gradient-to-r from-cyan-600 to-blue-600 p-6 text-white">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-2xl font-bold tracking-tight">Drawing Series Builder</h1>
-                    <p class="text-cyan-100 text-sm mt-1">Upload PDF drawing files to group sequential numbers into clean, hyphenated ranges.</p>
-                </div>
-                <div class="bg-white/10 p-3 rounded-xl backdrop-blur-md hidden sm:block">
-                    <svg class="w-8 h-8 text-cyan-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                </div>
-            </div>
-        </div>
+    <div class="w-full max-w-2xl">
+        <!-- Navigation Button -->
+        <nav class="top-nav">
+            <a href="../" onclick="goBackToMain(event)">&larr; Back to Apps Hub</a>
+        </nav>
 
-        <!-- Body Form -->
-        <div class="p-6 space-y-6">
-            <!-- File Upload Section (PDF Only) -->
-            <div class="bg-slate-950/50 border-2 border-dashed border-slate-700 hover:border-cyan-500 rounded-xl p-8 text-center transition-all cursor-pointer relative group" id="drop-zone">
-                <input type="file" id="file-input" multiple accept=".pdf" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10" onchange="handleFilesSelect(this.files)">
-                <div class="flex flex-col items-center justify-center space-y-3">
-                    <div class="p-4 bg-cyan-500/10 rounded-full group-hover:bg-cyan-500/20 transition-all text-cyan-400">
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+        <div class="bg-slate-900/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-800 overflow-hidden">
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-cyan-600 to-blue-600 p-6 text-white">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-2xl font-bold tracking-tight">Drawing Series Builder</h1>
+                        <p class="text-cyan-100 text-sm mt-1">Upload PDF drawing files to group sequential numbers into clean, hyphenated ranges.</p>
                     </div>
-                    <div class="text-base font-semibold text-slate-200">Drop PDF drawing files here, or <span class="text-cyan-400 underline">browse PDF files</span></div>
-                    <p class="text-xs text-slate-400">Only .pdf drawing formats with numbering in filenames will be processed.</p>
+                    <div class="bg-white/10 p-3 rounded-xl backdrop-blur-md hidden sm:block">
+                        <svg class="w-8 h-8 text-cyan-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    </div>
                 </div>
             </div>
 
-            <!-- Uploaded Files Summary / Badge List -->
-            <div id="files-summary-container" class="hidden">
-                <div class="flex justify-between items-center mb-2">
-                    <label class="block text-sm font-semibold text-slate-300" id="uploaded-count-label">Uploaded PDF Files (0)</label>
-                    <button onclick="clearFiles()" class="text-xs text-rose-400 font-medium hover:underline">Clear All</button>
+            <!-- Body Form -->
+            <div class="p-6 space-y-6">
+                <!-- File Upload Section (PDF Only) -->
+                <div class="bg-slate-950/50 border-2 border-dashed border-slate-700 hover:border-cyan-500 rounded-xl p-8 text-center transition-all cursor-pointer relative group" id="drop-zone">
+                    <input type="file" id="file-input" multiple accept=".pdf" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10" onchange="handleFilesSelect(this.files)">
+                    <div class="flex flex-col items-center justify-center space-y-3">
+                        <div class="p-4 bg-cyan-500/10 rounded-full group-hover:bg-cyan-500/20 transition-all text-cyan-400">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                        </div>
+                        <div class="text-base font-semibold text-slate-200">Drop PDF drawing files here, or <span class="text-cyan-400 underline">browse PDF files</span></div>
+                        <p class="text-xs text-slate-400">Only .pdf drawing formats with numbering in filenames will be processed.</p>
+                    </div>
                 </div>
-                <div id="files-badge-list" class="flex flex-wrap gap-2 max-h-36 overflow-y-auto p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs">
-                    <!-- Dynamic badges here -->
-                </div>
-            </div>
 
-            <!-- Options Section -->
-            <div class="flex flex-wrap items-center justify-between gap-4 bg-slate-950 p-4 rounded-xl border border-slate-800 text-slate-300">
-                <div class="flex items-center space-x-6">
+                <!-- Uploaded Files Summary / Badge List -->
+                <div id="files-summary-container" class="hidden">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="block text-sm font-semibold text-slate-300" id="uploaded-count-label">Uploaded PDF Files (0)</label>
+                        <button onclick="clearFiles()" class="text-xs text-rose-400 font-medium hover:underline">Clear All</button>
+                    </div>
+                    <div id="files-badge-list" class="flex flex-wrap gap-2 max-h-36 overflow-y-auto p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs">
+                        <!-- Dynamic badges here -->
+                    </div>
+                </div>
+
+                <!-- Options Section -->
+                <div class="flex flex-wrap items-center justify-between gap-4 bg-slate-950 p-4 rounded-xl border border-slate-800 text-slate-300">
+                    <div class="flex items-center space-x-6">
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" id="sort-output" checked onchange="buildSeries()" class="rounded bg-slate-900 border-slate-700 text-cyan-500 focus:ring-cyan-500 h-4 w-4">
+                            <span class="text-sm font-medium">Sort numerically</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" id="remove-duplicates" checked onchange="buildSeries()" class="rounded bg-slate-900 border-slate-700 text-cyan-500 focus:ring-cyan-500 h-4 w-4">
+                            <span class="text-sm font-medium">Remove duplicates</span>
+                        </label>
+                    </div>
                     <label class="flex items-center space-x-2 cursor-pointer">
-                        <input type="checkbox" id="sort-output" checked onchange="buildSeries()" class="rounded bg-slate-900 border-slate-700 text-cyan-500 focus:ring-cyan-500 h-4 w-4">
-                        <span class="text-sm font-medium">Sort numerically</span>
-                    </label>
-                    <label class="flex items-center space-x-2 cursor-pointer">
-                        <input type="checkbox" id="remove-duplicates" checked onchange="buildSeries()" class="rounded bg-slate-900 border-slate-700 text-cyan-500 focus:ring-cyan-500 h-4 w-4">
-                        <span class="text-sm font-medium">Remove duplicates</span>
+                        <input type="checkbox" id="strip-ext" checked onchange="buildSeries()" class="rounded bg-slate-900 border-slate-700 text-cyan-500 focus:ring-cyan-500 h-4 w-4">
+                        <span class="text-sm font-medium">Strip file extensions (.pdf)</span>
                     </label>
                 </div>
-                <label class="flex items-center space-x-2 cursor-pointer">
-                    <input type="checkbox" id="strip-ext" checked onchange="buildSeries()" class="rounded bg-slate-900 border-slate-700 text-cyan-500 focus:ring-cyan-500 h-4 w-4">
-                    <span class="text-sm font-medium">Strip file extensions (.pdf)</span>
-                </label>
-            </div>
 
-            <!-- Output Section -->
-            <div>
-                <div class="flex justify-between items-center mb-2">
-                    <label for="output-string" class="block text-sm font-semibold text-slate-300">Output Series String</label>
-                    <button onclick="copyOutput()" id="copy-btn" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium py-1.5 px-3 rounded-lg transition-all flex items-center space-x-1 border border-slate-700 shadow-sm">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
-                        <span id="copy-text">Copy Result</span>
-                    </button>
+                <!-- Output Section -->
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <label for="output-string" class="block text-sm font-semibold text-slate-300">Output Series String</label>
+                        <button onclick="copyOutput()" id="copy-btn" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium py-1.5 px-3 rounded-lg transition-all flex items-center space-x-1 border border-slate-700 shadow-sm">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+                            <span id="copy-text">Copy Result</span>
+                        </button>
+                    </div>
+                    <textarea id="output-string" rows="3" readonly
+                        class="w-full rounded-xl border border-slate-800 bg-slate-950 p-3 text-sm font-mono text-cyan-300 focus:outline-none shadow-inner"
+                        placeholder="Upload PDF files above to generate series string..."></textarea>
                 </div>
-                <textarea id="output-string" rows="3" readonly
-                    class="w-full rounded-xl border border-slate-800 bg-slate-950 p-3 text-sm font-mono text-cyan-300 focus:outline-none shadow-inner"
-                    placeholder="Upload PDF files above to generate series string..."></textarea>
             </div>
-        </div>
 
-        <!-- Footer Info -->
-        <div class="bg-slate-950 px-6 py-3 border-t border-slate-800 text-xs text-slate-400 flex justify-between items-center">
-            <span>Drawing Series Builder v1.1</span>
-            <span id="stats-info">Ready</span>
+            <!-- Footer Info -->
+            <div class="bg-slate-950 px-6 py-3 border-t border-slate-800 text-xs text-slate-400 flex justify-between items-center">
+                <span>Drawing Series Builder v1.2</span>
+                <span id="stats-info">Ready</span>
+            </div>
         </div>
     </div>
 
@@ -136,7 +155,6 @@
             e.preventDefault();
             showToast('Navigating back to main portal...');
             setTimeout(() => {
-                // In embedded environment or single-page apps, trigger action or redirect
                 window.location.reload();
             }, 600);
         }
