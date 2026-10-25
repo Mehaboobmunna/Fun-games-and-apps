@@ -93,8 +93,9 @@
           </h1>
           <span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-mono font-bold">v3.2</span>
         </div>
-        <p class="text-[10px] text-emerald-400/80 font-medium tracking-wider uppercase">
-          4-of-a-Kind Fast Passing
+        <p class="text-[10px] text-emerald-400/80 font-medium tracking-wider uppercase flex items-center gap-2">
+          <span>4-of-a-Kind Fast Passing</span>
+          <span id="globalPlayCountBadge" class="hidden sm:inline text-amber-300 font-mono font-bold">• <span id="totalGamesCounter">...</span> games completed</span>
         </p>
       </div>
     </div>
@@ -257,14 +258,19 @@
   <!-- Setup / New Game Modal -->
   <div id="setupModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md hidden">
     <div class="bg-slate-900 border border-emerald-500/40 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-5">
-      <div class="flex items-center space-x-3 pb-3 border-b border-emerald-900/60">
-        <div class="p-2 rounded-xl bg-emerald-500/20 text-emerald-300 text-xl font-bold">
-          ⚡
+      <div class="flex items-center justify-between pb-3 border-b border-emerald-900/60">
+        <div class="flex items-center space-x-3">
+          <div class="p-2 rounded-xl bg-emerald-500/20 text-emerald-300 text-xl font-bold">
+            ⚡
+          </div>
+          <div>
+            <h2 class="text-lg font-black text-white">Quartet Clash Setup</h2>
+            <p class="text-xs text-slate-400">Configure players & themes</p>
+          </div>
         </div>
-        <div>
-          <h2 class="text-lg font-black text-white">Quartet Clash Setup</h2>
-          <p class="text-xs text-slate-400">Configure players & themes</p>
-        </div>
+        <button id="closeSetupModalBtn" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center transition border border-slate-700" title="Exit / Close">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
       </div>
 
       <div class="space-y-4">
@@ -339,8 +345,12 @@
         </div>
       </div>
 
-      <div class="pt-3">
-        <button id="startGameSubmit" class="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-sm tracking-wide shadow-lg shadow-emerald-500/20 transition">
+      <div class="pt-3 flex items-center gap-2.5">
+        <button id="setupQuitBtn" class="flex-1 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-rose-300 border border-rose-900/60 font-bold text-xs tracking-wide transition flex items-center justify-center gap-1.5 shadow">
+          <i data-lucide="log-out" class="w-4 h-4 text-rose-400"></i>
+          <span>Quit Game</span>
+        </button>
+        <button id="startGameSubmit" class="flex-[1.5] py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-sm tracking-wide shadow-lg shadow-emerald-500/20 transition">
           Deal Cards & Clash
         </button>
       </div>
@@ -842,6 +852,33 @@
       return result;
     }
 
+    // Fetch and display total global game completions on startup
+    async function fetchTotalGamesPlayed() {
+      try {
+        const res = await fetch('https://api.counterapi.dev/v1/project-hub-games/quartet-clash');
+        if (res.ok) {
+          const data = await res.json();
+          const counterEl = document.getElementById('totalGamesCounter');
+          if (counterEl && typeof data.count === 'number') {
+            counterEl.textContent = data.count.toLocaleString();
+          }
+        }
+      } catch (e) {}
+    }
+
+    // Increment completed game count when a round finishes with a winner
+    function incrementCompletedGameCount() {
+      fetch('https://api.counterapi.dev/v1/project-hub-games/quartet-clash/up')
+        .then(res => res.json())
+        .then(data => {
+          const counterEl = document.getElementById('totalGamesCounter');
+          if (counterEl && data && typeof data.count === 'number') {
+            counterEl.textContent = data.count.toLocaleString();
+          }
+        })
+        .catch(() => {});
+    }
+
     const DEFAULT_FIREBASE_CONFIG = {
       apiKey: "PASTE_YOUR_API_KEY_HERE",
       authDomain: "PASTE_YOUR_AUTH_DOMAIN_HERE",
@@ -1057,6 +1094,15 @@
         document.getElementById('setupModal').classList.add('hidden');
         resetMatchScores();
         startNewRound();
+      });
+
+      document.getElementById('closeSetupModalBtn').addEventListener('click', () => {
+        document.getElementById('setupModal').classList.add('hidden');
+      });
+
+      document.getElementById('setupQuitBtn').addEventListener('click', async () => {
+        document.getElementById('setupModal').classList.add('hidden');
+        await performLeaveGame();
       });
 
       document.getElementById('newGameHeaderBtn').addEventListener('click', () => {
@@ -1548,6 +1594,7 @@
 
       if (room.status === 'round_ended' && room.winnerInfo && !window._roundEndModalShowing) {
         window._roundEndModalShowing = true;
+        incrementCompletedGameCount();
         finishOnlineRoundShowcase(room.winnerInfo);
       } else if (room.status === 'in_progress') {
         window._roundEndModalShowing = false;
@@ -1708,6 +1755,7 @@
 
       for (let i = 0; i < state.playerCount; i++) {
         if (checkFourOfAKind(state.players[i].hand)) {
+          incrementCompletedGameCount();
           finishRound(i);
           return;
         }
@@ -1834,6 +1882,7 @@
         const winKind = checkFourOfAKind(toPlayer.hand);
         if (winKind) {
           clearTimeout(state.botTimer);
+          incrementCompletedGameCount();
           finishRound(toPlayer.id);
           return;
         }
@@ -1862,6 +1911,7 @@
       const currentWin = checkFourOfAKind(bot.hand);
       if (currentWin) {
         clearTimeout(state.botTimer);
+        incrementCompletedGameCount();
         finishRound(bot.id);
         return;
       }
@@ -2350,6 +2400,7 @@
     window.onload = function() {
       setupEventListeners();
       resetMatchScores();
+      fetchTotalGamesPlayed();
       document.getElementById('setupModal').classList.remove('hidden');
       lucide.createIcons();
     };
