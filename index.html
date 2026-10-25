@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Project Hub · Games, Apps & Blog</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
@@ -15,6 +15,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
+      justify-content: center;
       padding: 3rem 1.5rem;
     }
     header { text-align: center; margin-bottom: 3rem; }
@@ -22,30 +23,38 @@
     header p { color: #94a3b8; font-size: 1.1rem; }
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
       gap: 1.5rem;
       width: 100%;
       max-width: 900px;
     }
+    /* Entire card is now a clickable anchor */
     .card {
       background: #1e293b;
       border: 1px solid #334155;
       border-radius: 12px;
-      padding: 1.5rem;
-      transition: transform 0.2s, border-color 0.2s;
+      padding: 1.75rem;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
     }
     .card:hover {
       transform: translateY(-4px);
       border-color: #38bdf8;
+      box-shadow: 0 10px 25px rgba(56, 189, 248, 0.1);
     }
-    .card h2 { font-size: 1.3rem; margin-bottom: 0.5rem; color: #f1f5f9; }
-    .card p { color: #94a3b8; font-size: 0.95rem; line-height: 1.5; margin-bottom: 1rem; }
-    .card a {
-      display: inline-block;
+    .card h2 { font-size: 1.35rem; margin-bottom: 0.5rem; color: #f1f5f9; }
+    .card p { color: #94a3b8; font-size: 0.95rem; line-height: 1.5; margin-bottom: 1.5rem; }
+    .card-action {
       color: #38bdf8;
-      text-decoration: none;
       font-weight: 600;
       font-size: 0.9rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
     }
   </style>
 </head>
@@ -56,23 +65,32 @@
   </header>
 
   <main class="grid">
-    <div class="card">
-      <h2>🎮 Games</h2>
-      <p>Real-time multiplayer games and web-based prototypes.</p>
-      <a href="./games/">Explore Games &rarr;</a>
-    </div>
+    <!-- Games Tile -->
+    <a href="./games/" class="card">
+      <div>
+        <h2>🎮 Games</h2>
+        <p>Real-time multiplayer games, card duels, and web-based arcade prototypes.</p>
+      </div>
+      <span class="card-action">Explore Games &rarr;</span>
+    </a>
 
-    <div class="card">
-      <h2>⚡ Apps</h2>
-      <p>Interactive web tools, calculators, and automated workflows.</p>
-      <a href="./apps/">Launch Apps &rarr;</a>
-    </div>
+    <!-- Apps Tile -->
+    <a href="./apps/" class="card">
+      <div>
+        <h2>⚡ Apps</h2>
+        <p>Interactive web tools, minimalist productivity trackers, and automated workflows.</p>
+      </div>
+      <span class="card-action">Launch Apps &rarr;</span>
+    </a>
 
-    <div class="card">
-      <h2>📝 Blog</h2>
-      <p>Development notes, project breakdowns, and architecture guides.</p>
-      <a href="./blog/">Read Articles &rarr;</a>
-    </div>
+    <!-- Blog Tile -->
+    <a href="./blog/" class="card">
+      <div>
+        <h2>📝 Blog</h2>
+        <p>Development notes, project architecture breakdowns, and engineering guides.</p>
+      </div>
+      <span class="card-action">Read Articles &rarr;</span>
+    </a>
   </main>
 </body>
 </html>
