@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Card Quartet Showdown</title>
+  <title>Card Quartet Showdown v3.1</title>
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -87,9 +87,12 @@
         🂠
       </div>
       <div>
-        <h1 class="text-sm sm:text-base font-extrabold tracking-wide bg-gradient-to-r from-emerald-300 via-teal-200 to-amber-200 bg-clip-text text-transparent">
-          Card Quartet Showdown
-        </h1>
+        <div class="flex items-center gap-1.5">
+          <h1 class="text-sm sm:text-base font-extrabold tracking-wide bg-gradient-to-r from-emerald-300 via-teal-200 to-amber-200 bg-clip-text text-transparent">
+            Card Quartet Showdown
+          </h1>
+          <span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-mono font-bold">v3.1</span>
+        </div>
         <p class="text-[10px] text-emerald-400/80 font-medium tracking-wider uppercase">
           4-of-a-Kind Fast Passing
         </p>
@@ -909,7 +912,7 @@
     /* -------------------------------------------------------------
        CARD VAULT
     ------------------------------------------------------------- */
-    const CARD_CACHE_KEY = 'QUARTET_CARD_CACHE_V3';
+    const CARD_CACHE_KEY = 'QUARTET_CARD_CACHE_V3_1';
 
     class CardVault {
       constructor() {
@@ -1212,7 +1215,6 @@
       const activePlayer = state.players[getActiveViewPlayerIndex()];
       if (!activePlayer || activePlayer.hand.length === 0) return;
 
-      // If user hasn't explicitly picked a card, pick the first available card automatically
       if (!state.selectedCardId || !activePlayer.hand.some(c => c.id === state.selectedCardId)) {
         state.selectedCardId = activePlayer.hand[0].id;
       }
@@ -1655,7 +1657,9 @@
 
     function finishOnlineRoundShowcase(winnerInfo) {
       sound.playWin();
-      confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 } });
+      try {
+        confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 } });
+      } catch (e) {}
 
       const winner = state.players[winnerInfo.winnerSeat];
       const modal = document.getElementById('roundEndModal');
@@ -1858,12 +1862,13 @@
       if (!fromPlayer || fromPlayer.hand.length === 0) return;
 
       let cardIndex = fromPlayer.hand.findIndex(c => c.id === cardId);
-      // Fallback: if selected ID not found, take the first card in hand
       if (cardIndex === -1) {
         cardIndex = 0;
       }
 
       state.isPassInProgress = true;
+      clearTimeout(state.botTimer);
+
       const [passedCard] = fromPlayer.hand.splice(cardIndex, 1);
       const nextIndex = (state.turnIndex + 1) % state.playerCount;
       const toPlayer = state.players[nextIndex];
@@ -1874,8 +1879,10 @@
         state.selectedCardId = null;
         state.isPassInProgress = false;
 
+        // Check if the receiving player now has 4 of a kind
         const winKind = checkFourOfAKind(toPlayer.hand);
         if (winKind) {
+          clearTimeout(state.botTimer);
           finishRound(toPlayer.id);
           return;
         }
@@ -1901,6 +1908,14 @@
       if (!state.isRoundActive || state.isPassInProgress) return;
       const bot = state.players[botIndex];
       if (!bot || bot.hand.length === 0) return;
+
+      // Before passing, check if bot already holds 4 of a kind
+      const currentWin = checkFourOfAKind(bot.hand);
+      if (currentWin) {
+        clearTimeout(state.botTimer);
+        finishRound(bot.id);
+        return;
+      }
 
       const counts = {};
       bot.hand.forEach(c => { counts[c.kindId] = (counts[c.kindId] || 0) + 1; });
@@ -1962,8 +1977,10 @@
     }
 
     function checkFourOfAKind(hand) {
+      if (!hand || !Array.isArray(hand)) return null;
       const counts = {};
       for (const card of hand) {
+        if (!card || !card.kindId) continue;
         counts[card.kindId] = (counts[card.kindId] || 0) + 1;
         if (counts[card.kindId] >= 4) {
           return card.kindId;
@@ -1986,7 +2003,6 @@
       if (!state.isRoundActive || state.isPassInProgress) return;
       if (!isCurrentTurnHuman()) return;
 
-      // If already selected, second tap initiates the pass immediately for fast play!
       if (state.selectedCardId === cardId) {
         executePass(cardId);
         return;
@@ -2012,22 +2028,33 @@
     ------------------------------------------------------------- */
     function finishRound(winnerIdx) {
       state.isRoundActive = false;
+      state.isPassInProgress = false;
       clearTimeout(state.botTimer);
+      state.botTimer = null;
+
       sound.playWin();
 
-      confetti({
-        particleCount: 80,
-        spread: 70,
-        origin: { y: 0.6 }
-      });
+      try {
+        confetti({
+          particleCount: 90,
+          spread: 75,
+          origin: { y: 0.6 }
+        });
+      } catch (e) {}
 
       const winner = state.players[winnerIdx];
-      const winKindId = checkFourOfAKind(winner.hand);
+      if (!winner) return;
+
+      const winKindId = checkFourOfAKind(winner.hand) || (winner.hand[0] ? winner.hand[0].kindId : null);
       const fullTheme = THEMES[state.themeKey] || THEMES.animals;
-      const winKindObj = fullTheme.find(k => k.id === winKindId) || winner.hand[0];
+      const winKindObj = fullTheme.find(k => k.id === winKindId) || (winner.hand[0] || { name: 'Quartet Set', symbol: '🂠' });
 
       const roundSummary = [];
       state.players.forEach((p) => {
+        if (!state.scores[p.id]) {
+          state.scores[p.id] = { wins: 0, points: 0 };
+        }
+
         const stats = getHighestMatchingStats(p.hand);
         let earnedPoints = 0;
         let note = '';
@@ -2035,13 +2062,13 @@
         if (p.id === winnerIdx) {
           earnedPoints = 100;
           note = 'Round Winner! (4 of a kind)';
-          if (state.scores[p.id]) state.scores[p.id].wins += 1;
+          state.scores[p.id].wins += 1;
         } else {
           earnedPoints = stats.count * 25;
           note = `${stats.count} matching (${stats.count} × 25 pts)`;
         }
 
-        if (state.scores[p.id]) state.scores[p.id].points += earnedPoints;
+        state.scores[p.id].points += earnedPoints;
 
         roundSummary.push({
           id: p.id,
@@ -2049,7 +2076,7 @@
           isWinner: p.id === winnerIdx,
           earned: earnedPoints,
           note: note,
-          total: state.scores[p.id]?.points || 0
+          total: state.scores[p.id].points
         });
       });
 
@@ -2060,7 +2087,8 @@
       const showcase = document.getElementById('winningHandShowcase');
       showcase.innerHTML = '';
       const winningCards = winner.hand.filter(c => c.kindId === winKindId).slice(0, 4);
-      winningCards.forEach(c => {
+      const displayCards = winningCards.length > 0 ? winningCards : winner.hand.slice(0, 4);
+      displayCards.forEach(c => {
         showcase.appendChild(createMiniCard(c));
       });
 
@@ -2074,7 +2102,7 @@
               <span class="text-[10px] text-slate-400 block">${item.note}</span>
             </div>
             <div class="text-right">
-              <span class="text-emerald-400 font-black">+${earned} pts</span>
+              <span class="text-emerald-400 font-black">+${item.earned} pts</span>
               <span class="text-[10px] text-slate-400 block">Total: ${item.total} pts</span>
             </div>
           </div>
@@ -2085,7 +2113,12 @@
       nextBtn.textContent = 'Next Round (Dealer Shifts ➔)';
       nextBtn.disabled = false;
 
+      // Close other conflicting overlays and reveal modal reliably
+      document.getElementById('passFlightOverlay').classList.add('hidden');
+      document.getElementById('passAndPlayModal').classList.add('hidden');
       modal.classList.remove('hidden');
+
+      renderUI();
       lucide.createIcons();
     }
 
@@ -2248,7 +2281,6 @@
       const matchStats = getHighestMatchingStats(player.hand);
       document.getElementById('bestMatchCount').textContent = `${matchStats.count}/4`;
 
-      // Auto-validate current selected card
       if (state.selectedCardId && !player.hand.some(c => c.id === state.selectedCardId)) {
         state.selectedCardId = player.hand.length > 0 ? player.hand[0].id : null;
       }
@@ -2379,7 +2411,8 @@
     window.onload = function() {
       setupEventListeners();
       resetMatchScores();
-      startNewRound();
+      // Show setup modal on startup instead of auto-starting
+      document.getElementById('setupModal').classList.remove('hidden');
       lucide.createIcons();
     };
   </script>
