@@ -82,35 +82,34 @@
     </a>
   </div>
 
-  <script>
+<script>
     async function fetchAllStats() {
-      // Set safe default values immediately so the user never waits
       let qcCount = 0;
       let fttCount = 0;
 
       try {
-        // Fetch Quartet Clash count with a timeout/error catch
-        const resQC = await fetch('https://api.counterapi.dev/v1/project-hub-games/quartet-clash/').catch(() => null);
-        if (resQC && resQC.ok) {
+        // Fetch Quartet Clash count
+        const resQC = await fetch('https://countapi.mileshilliard.com/api/v1/get/project_hub_quartet_clash');
+        if (resQC.ok) {
           const dataQC = await resQC.json();
-          qcCount = dataQC.count || 0;
+          qcCount = parseInt(dataQC.value || 0, 10);
         }
       } catch (e) {
-        console.log("Could not fetch Quartet Clash stats");
+        console.log("Quartet Clash fetch failed");
       }
 
       try {
         // Fetch Find the Thief count
-        const resFTT = await fetch('https://api.counterapi.dev/v1/project-hub-games/find-the-thief/').catch(() => null);
-        if (resFTT && resFTT.ok) {
+        const resFTT = await fetch('https://countapi.mileshilliard.com/api/v1/get/project_hub_find_the_thief');
+        if (resFTT.ok) {
           const dataFTT = await resFTT.json();
-          fttCount = dataFTT.count || 0;
+          fttCount = parseInt(dataFTT.value || 0, 10);
         }
       } catch (e) {
-        console.log("Could not fetch Find the Thief stats");
+        console.log("Find the Thief fetch failed");
       }
 
-      // Update the UI numbers
+      // Display the numbers instantly
       document.getElementById('qc-matches').textContent = qcCount;
       document.getElementById('ftt-matches').textContent = fttCount;
       document.getElementById('total-matches').textContent = qcCount + fttCount;
