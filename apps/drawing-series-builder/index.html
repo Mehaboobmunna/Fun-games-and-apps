@@ -12,9 +12,20 @@
             theme: {
                 extend: {
                     colors: {
-                        darkBg: '#0f172a',
-                        darkCard: '#1e293b',
-                        darkBorder: '#334155',
+                        bg: '#090d16',
+                        cardBg: '#111726',
+                        cardHover: '#172033',
+                        cardActive: '#1e293b',
+                        borderCol: '#1e293b',
+                        borderFocus: '#3b82f6',
+                        txt: '#f1f5f9',
+                        textMuted: '#64748b',
+                        accent: '#2563eb',
+                        accentHover: '#1d4ed8',
+                        accentLight: '#60a5fa',
+                        success: '#10b981',
+                        warning: '#f59e0b',
+                        danger: '#ef4444',
                     }
                 }
             }
@@ -23,7 +34,64 @@
     <!-- Font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        :root {
+            /* Surfaces & Backgrounds */
+            --bg: #090d16;
+            --card-bg: rgba(17, 23, 38, 0.75);
+            --card-hover: rgba(23, 32, 51, 0.85);
+            --card-active: #1e293b;
+
+            /* Borders & Dividers */
+            --border: #1e293b;
+            --border-focus: #3b82f6;
+
+            /* Typography */
+            --text: #f1f5f9;
+            --text-muted: #64748b;
+
+            /* Primary Brand Accents */
+            --accent: #2563eb;
+            --accent-hover: #1d4ed8;
+            --accent-light: #60a5fa;
+
+            /* Semantic Alerts */
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+
+            /* Geometry & Typography System */
+            --radius: 8px;
+            --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body { 
+            font-family: var(--font-sans); 
+            background-color: var(--bg);
+            color: var(--text);
+        }
+
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+        }
+
+        .glass-input {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: var(--radius);
+        }
+
+        .glass-input:focus {
+            border-color: var(--border-focus);
+            outline: none;
+        }
+
         .top-nav {
             margin-bottom: 1.5rem;
         }
@@ -31,35 +99,35 @@
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
-            color: #94a3b8;
+            color: var(--text-muted);
             font-size: 0.875rem;
             font-weight: 500;
             text-decoration: none;
             transition: color 0.2s ease;
         }
         .top-nav a:hover {
-            color: #f8fafc;
+            color: var(--text);
         }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 relative">
+<body class="min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 relative">
 
     <div class="w-full max-w-2xl">
-        <!-- Navigation Button -->
+        <!-- Navigation Button matching requested hub style -->
         <nav class="top-nav">
             <a href="../" onclick="goBackToMain(event)">&larr; Back to Apps Hub</a>
         </nav>
 
-        <div class="bg-slate-900/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-800 overflow-hidden">
+        <div class="glass-card shadow-2xl overflow-hidden">
             <!-- Header -->
-            <div class="bg-gradient-to-r from-cyan-600 to-blue-600 p-6 text-white">
+            <div class="bg-gradient-to-r from-blue-700/80 to-blue-600/60 backdrop-blur-md p-6 text-white border-b border-blue-500/20">
                 <div class="flex items-center justify-between">
                     <div>
                         <h1 class="text-2xl font-bold tracking-tight">Drawing Series Builder</h1>
-                        <p class="text-cyan-100 text-sm mt-1">Upload PDF drawing files to group sequential numbers into clean, hyphenated ranges.</p>
+                        <p class="text-blue-200 text-sm mt-1">Upload PDF drawing files to group sequential numbers into clean, hyphenated ranges.</p>
                     </div>
                     <div class="bg-white/10 p-3 rounded-xl backdrop-blur-md hidden sm:block">
-                        <svg class="w-8 h-8 text-cyan-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        <svg class="w-8 h-8 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                     </div>
                 </div>
             </div>
@@ -67,13 +135,13 @@
             <!-- Body Form -->
             <div class="p-6 space-y-6">
                 <!-- File Upload Section (PDF Only) -->
-                <div class="bg-slate-950/50 border-2 border-dashed border-slate-700 hover:border-cyan-500 rounded-xl p-8 text-center transition-all cursor-pointer relative group" id="drop-zone">
+                <div class="glass-card border-2 border-dashed border-slate-700/80 hover:border-blue-500 p-8 text-center transition-all cursor-pointer relative group" id="drop-zone">
                     <input type="file" id="file-input" multiple accept=".pdf" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10" onchange="handleFilesSelect(this.files)">
                     <div class="flex flex-col items-center justify-center space-y-3">
-                        <div class="p-4 bg-cyan-500/10 rounded-full group-hover:bg-cyan-500/20 transition-all text-cyan-400">
+                        <div class="p-4 bg-blue-500/10 rounded-full group-hover:bg-blue-500/20 transition-all text-blue-400">
                             <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
                         </div>
-                        <div class="text-base font-semibold text-slate-200">Drop PDF drawing files here, or <span class="text-cyan-400 underline">browse PDF files</span></div>
+                        <div class="text-base font-semibold text-slate-200">Drop PDF drawing files here, or <span class="text-blue-400 underline">browse PDF files</span></div>
                         <p class="text-xs text-slate-400">Only .pdf drawing formats with numbering in filenames will be processed.</p>
                     </div>
                 </div>
@@ -84,25 +152,25 @@
                         <label class="block text-sm font-semibold text-slate-300" id="uploaded-count-label">Uploaded PDF Files (0)</label>
                         <button onclick="clearFiles()" class="text-xs text-rose-400 font-medium hover:underline">Clear All</button>
                     </div>
-                    <div id="files-badge-list" class="flex flex-wrap gap-2 max-h-36 overflow-y-auto p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs">
+                    <div id="files-badge-list" class="flex flex-wrap gap-2 max-h-36 overflow-y-auto p-3 glass-input text-xs">
                         <!-- Dynamic badges here -->
                     </div>
                 </div>
 
                 <!-- Options Section -->
-                <div class="flex flex-wrap items-center justify-between gap-4 bg-slate-950 p-4 rounded-xl border border-slate-800 text-slate-300">
+                <div class="flex flex-wrap items-center justify-between gap-4 glass-card p-4 text-slate-300">
                     <div class="flex items-center space-x-6">
                         <label class="flex items-center space-x-2 cursor-pointer">
-                            <input type="checkbox" id="sort-output" checked onchange="buildSeries()" class="rounded bg-slate-900 border-slate-700 text-cyan-500 focus:ring-cyan-500 h-4 w-4">
+                            <input type="checkbox" id="sort-output" checked onchange="buildSeries()" class="rounded bg-slate-900 border-slate-700 text-blue-600 focus:ring-blue-500 h-4 w-4">
                             <span class="text-sm font-medium">Sort numerically</span>
                         </label>
                         <label class="flex items-center space-x-2 cursor-pointer">
-                            <input type="checkbox" id="remove-duplicates" checked onchange="buildSeries()" class="rounded bg-slate-900 border-slate-700 text-cyan-500 focus:ring-cyan-500 h-4 w-4">
+                            <input type="checkbox" id="remove-duplicates" checked onchange="buildSeries()" class="rounded bg-slate-900 border-slate-700 text-blue-600 focus:ring-blue-500 h-4 w-4">
                             <span class="text-sm font-medium">Remove duplicates</span>
                         </label>
                     </div>
                     <label class="flex items-center space-x-2 cursor-pointer">
-                        <input type="checkbox" id="strip-ext" checked onchange="buildSeries()" class="rounded bg-slate-900 border-slate-700 text-cyan-500 focus:ring-cyan-500 h-4 w-4">
+                        <input type="checkbox" id="strip-ext" checked onchange="buildSeries()" class="rounded bg-slate-900 border-slate-700 text-blue-600 focus:ring-blue-500 h-4 w-4">
                         <span class="text-sm font-medium">Strip file extensions (.pdf)</span>
                     </label>
                 </div>
@@ -111,28 +179,28 @@
                 <div>
                     <div class="flex justify-between items-center mb-2">
                         <label for="output-string" class="block text-sm font-semibold text-slate-300">Output Series String</label>
-                        <button onclick="copyOutput()" id="copy-btn" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium py-1.5 px-3 rounded-lg transition-all flex items-center space-x-1 border border-slate-700 shadow-sm">
+                        <button onclick="copyOutput()" id="copy-btn" class="text-xs bg-slate-800/80 hover:bg-slate-700 text-slate-200 font-medium py-1.5 px-3 rounded-lg transition-all flex items-center space-x-1 border border-slate-700 shadow-sm">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
                             <span id="copy-text">Copy Result</span>
                         </button>
                     </div>
                     <textarea id="output-string" rows="3" readonly
-                        class="w-full rounded-xl border border-slate-800 bg-slate-950 p-3 text-sm font-mono text-cyan-300 focus:outline-none shadow-inner"
+                        class="w-full glass-input p-3 text-sm font-mono text-blue-300 shadow-inner"
                         placeholder="Upload PDF files above to generate series string..."></textarea>
                 </div>
             </div>
 
             <!-- Footer Info -->
-            <div class="bg-slate-950 px-6 py-3 border-t border-slate-800 text-xs text-slate-400 flex justify-between items-center">
-                <span>Drawing Series Builder v1.2</span>
+            <div class="bg-slate-950/40 px-6 py-3 border-t border-slate-800/60 text-xs text-slate-400 flex justify-between items-center backdrop-blur-md">
+                <span>Drawing Series Builder v1.3</span>
                 <span id="stats-info">Ready</span>
             </div>
         </div>
     </div>
 
     <!-- Notification Toast -->
-    <div id="toast" class="fixed bottom-5 right-5 transform translate-y-20 opacity-0 transition-all duration-300 bg-slate-800 border border-slate-700 text-slate-100 px-4 py-2.5 rounded-xl shadow-xl text-sm flex items-center space-x-2 z-50">
-        <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+    <div id="toast" class="fixed bottom-5 right-5 transform translate-y-20 opacity-0 transition-all duration-300 bg-slate-900/90 backdrop-blur-xl border border-slate-700 text-slate-100 px-4 py-2.5 rounded-xl shadow-xl text-sm flex items-center space-x-2 z-50">
+        <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
         <span id="toast-msg">Copied to clipboard!</span>
     </div>
 
@@ -197,9 +265,9 @@
             countLabel.innerText = `Uploaded PDF Files (${currentFilenames.length})`;
             
             badgeList.innerHTML = currentFilenames.map((name, idx) => `
-                <span class="bg-cyan-950 text-cyan-300 border border-cyan-800/50 px-2.5 py-1 rounded-md font-medium flex items-center space-x-1.5">
+                <span class="bg-blue-950/60 text-blue-300 border border-blue-800/40 px-2.5 py-1 rounded-md font-medium flex items-center space-x-1.5 backdrop-blur-sm">
                     <span>${name}</span>
-                    <button onclick="removeFile(${idx})" class="text-cyan-500 hover:text-rose-400 ml-1 font-bold">&times;</button>
+                    <button onclick="removeFile(${idx})" class="text-blue-400 hover:text-rose-400 ml-1 font-bold">&times;</button>
                 </span>
             `).join('');
         }
