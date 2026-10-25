@@ -79,7 +79,7 @@
                 <div class="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
                     <span class="text-sm text-slate-600 dark:text-slate-400">Include File Extension</span>
                     <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" id="extensionToggle" class="sr-only peer" checked>
+                        <input type="checkbox" id="extensionToggle" class="sr-only peer">
                         <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
                     </label>
                 </div>
@@ -137,11 +137,19 @@
 
             <!-- File List Container -->
             <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm flex flex-col flex-grow min-h-[280px]">
-                <div class="flex items-center justify-between mb-4">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
                     <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-2">
                         <i class="fa-solid fa-list-ul text-indigo-600"></i> File List
                     </h4>
-                    <span id="listCounter" class="text-xs px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-full">0 items</span>
+                    <div class="flex items-center gap-2 w-full sm:w-auto">
+                        <div class="relative flex-grow sm:flex-grow-0">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                                <i class="fa-solid fa-search text-xs"></i>
+                            </span>
+                            <input type="text" id="searchInput" placeholder="Filter files..." class="w-full sm:w-44 bg-slate-100 dark:bg-slate-800 border-none rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none" />
+                        </div>
+                        <span id="listCounter" class="text-xs px-2.5 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-full shrink-0">0 items</span>
+                    </div>
                 </div>
 
                 <!-- Empty State -->
@@ -179,8 +187,9 @@
         // State Management
         let filesArray = [];
         let sortAscending = true;
-        let includeExtension = true;
+        let includeExtension = false; // Set to OFF by default
         let currentDelimiter = ", ";
+        let searchQuery = "";
 
         // DOM Elements
         const dropZone = document.getElementById('dropZone');
@@ -190,6 +199,7 @@
         const sortText = document.getElementById('sortText');
         const extensionToggle = document.getElementById('extensionToggle');
         const delimiterSelect = document.getElementById('delimiterSelect');
+        const searchInput = document.getElementById('searchInput');
         const outputString = document.getElementById('outputString');
         const charCount = document.getElementById('charCount');
         const clearAllBtn = document.getElementById('clearAllBtn');
@@ -203,6 +213,9 @@
         const themeToggle = document.getElementById('themeToggle');
         const toast = document.getElementById('toast');
         const toastMessage = document.getElementById('toastMessage');
+
+        // Set initial state of extension toggle checkbox
+        extensionToggle.checked = includeExtension;
 
         // Theme Toggle Logic
         themeToggle.addEventListener('click', () => {
@@ -246,7 +259,6 @@
         // Process uploaded files
         function handleFiles(newFiles) {
             for (let i = 0; i < newFiles.length; i++) {
-                // Prevent exact duplicates based on name and size
                 const file = newFiles[i];
                 const exists = filesArray.some(f => f.name === file.name && f.size === file.size);
                 if (!exists) {
@@ -257,8 +269,8 @@
         }
 
         // Remove single file
-        window.removeFile = function(index) {
-            filesArray.splice(index, 1);
+        window.removeFile = function(originalIndex) {
+            filesArray.splice(originalIndex, 1);
             updateApp();
         };
 
@@ -294,6 +306,12 @@
             updateApp();
         });
 
+        // Search Input Event
+        searchInput.addEventListener('input', (e) => {
+            searchQuery = e.target.value.toLowerCase();
+            updateApp();
+        });
+
         // Helper function to process filename according to extension toggle
         function formatFilename(name) {
             if (!includeExtension) {
@@ -305,7 +323,7 @@
 
         // Main UI Update Function
         function updateApp() {
-            // 1. Sort files alphabetically
+            // 1. Sort files alphabetically by formatted filename
             filesArray.sort((a, b) => {
                 let nameA = formatFilename(a.name).toLowerCase();
                 let nameB = formatFilename(b.name).toLowerCase();
@@ -315,11 +333,10 @@
             });
 
             // 2. Update Stats & Button States
-            const count = filesArray.length;
-            fileCount.textContent = `${count} File${count === 1 ? '' : 's'}`;
-            listCounter.textContent = `${count} item${count === 1 ? '' : 's'}`;
+            const totalCount = filesArray.length;
+            fileCount.textContent = `${totalCount} File${totalCount === 1 ? '' : 's'}`;
             
-            const hasFiles = count > 0;
+            const hasFiles = totalCount > 0;
             clearAllBtn.disabled = !hasFiles;
             copyBtn.disabled = !hasFiles;
 
@@ -329,40 +346,52 @@
                 fileListContainer.innerHTML = '';
                 outputString.value = '';
                 charCount.textContent = '0 characters';
+                listCounter.textContent = '0 items';
                 return;
             }
 
             emptyState.classList.add('hidden');
             fileListContainer.classList.remove('hidden');
 
-            // 3. Render File List Items
+            // 3. Filter files according to search query
+            let formattedNamesAll = [];
+            let displayedCount = 0;
             let listHTML = '';
-            let formattedNames = [];
 
             filesArray.forEach((file, index) => {
                 const displayName = formatFilename(file.name);
-                formattedNames.push(displayName);
+                formattedNamesAll.push(displayName);
 
-                listHTML += `
-                    <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-100 dark:border-slate-800/80 hover:border-indigo-200 dark:hover:border-indigo-900 transition group">
-                        <div class="flex items-center space-x-3 overflow-hidden">
-                            <span class="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs flex items-center justify-center font-medium shrink-0">${index + 1}</span>
-                            <span class="text-sm font-medium text-slate-700 dark:text-slate-200 truncate" title="${file.name}">${displayName}</span>
+                const matchesSearch = displayName.toLowerCase().includes(searchQuery) || file.name.toLowerCase().includes(searchQuery);
+                
+                if (matchesSearch) {
+                    displayedCount++;
+                    listHTML += `
+                        <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-100 dark:border-slate-800/80 hover:border-indigo-200 dark:hover:border-indigo-900 transition group">
+                            <div class="flex items-center space-x-3 overflow-hidden">
+                                <span class="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs flex items-center justify-center font-medium shrink-0">${index + 1}</span>
+                                <span class="text-sm font-medium text-slate-700 dark:text-slate-200 truncate" title="${file.name}">${displayName}</span>
+                            </div>
+                            <div class="flex items-center gap-2 shrink-0">
+                                <span class="text-xs text-slate-400 hidden sm:inline">${formatFileSize(file.size)}</span>
+                                <button onclick="removeFile(${index})" class="w-8 h-8 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 flex items-center justify-center transition" title="Remove file">
+                                    <i class="fa-solid fa-xmark text-sm"></i>
+                                </button>
+                            </div>
                         </div>
-                        <div class="flex items-center gap-2 shrink-0">
-                            <span class="text-xs text-slate-400 hidden sm:inline">${formatFileSize(file.size)}</span>
-                            <button onclick="removeFile(${index})" class="w-8 h-8 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 flex items-center justify-center transition" title="Remove file">
-                                <i class="fa-solid fa-xmark text-sm"></i>
-                            </button>
-                        </div>
-                    </div>
-                `;
+                    `;
+                }
             });
 
-            fileListContainer.innerHTML = listHTML;
+            if (displayedCount === 0) {
+                listHTML = `<div class="py-8 text-center text-xs text-slate-400">No matching files found for "${searchQuery}"</div>`;
+            }
 
-            // 4. Generate Concatenated Output String
-            const resultString = formattedNames.join(currentDelimiter);
+            fileListContainer.innerHTML = listHTML;
+            listCounter.textContent = `${displayedCount} of ${totalCount} items`;
+
+            // 4. Generate Concatenated Output String (using all sorted files or filtered? standard is all sorted files)
+            const resultString = formattedNamesAll.join(currentDelimiter);
             outputString.value = resultString;
             charCount.textContent = `${resultString.length} character${resultString.length === 1 ? '' : 's'}`;
         }
@@ -381,9 +410,8 @@
             const textToCopy = outputString.value;
             if (!textToCopy) return;
 
-            // Use legacy execCommand method for robust sandbox/iframe compatibility
             outputString.select();
-            outputString.setSelectionRange(0, 99999); // For mobile devices
+            outputString.setSelectionRange(0, 99999);
 
             try {
                 const successful = document.execCommand('copy');
