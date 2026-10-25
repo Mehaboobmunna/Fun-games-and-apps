@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Card Quartet Showdown v3.1</title>
+  <title>Quartet Clash: 4-Card Showdown</title>
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -84,14 +84,14 @@
     <!-- Brand / Title -->
     <div class="flex items-center space-x-2">
       <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/20 text-slate-950 font-black text-lg">
-        🂠
+        ⚡
       </div>
       <div>
         <div class="flex items-center gap-1.5">
           <h1 class="text-sm sm:text-base font-extrabold tracking-wide bg-gradient-to-r from-emerald-300 via-teal-200 to-amber-200 bg-clip-text text-transparent">
-            Card Quartet Showdown
+            Quartet Clash
           </h1>
-          <span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-mono font-bold">v3.1</span>
+          <span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-mono font-bold">v3.2</span>
         </div>
         <p class="text-[10px] text-emerald-400/80 font-medium tracking-wider uppercase">
           4-of-a-Kind Fast Passing
@@ -259,10 +259,10 @@
     <div class="bg-slate-900 border border-emerald-500/40 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-5">
       <div class="flex items-center space-x-3 pb-3 border-b border-emerald-900/60">
         <div class="p-2 rounded-xl bg-emerald-500/20 text-emerald-300 text-xl font-bold">
-          🂠
+          ⚡
         </div>
         <div>
-          <h2 class="text-lg font-black text-white">Game Setup</h2>
+          <h2 class="text-lg font-black text-white">Quartet Clash Setup</h2>
           <p class="text-xs text-slate-400">Configure players & themes</p>
         </div>
       </div>
@@ -341,7 +341,7 @@
 
       <div class="pt-3">
         <button id="startGameSubmit" class="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-sm tracking-wide shadow-lg shadow-emerald-500/20 transition">
-          Deal Cards & Play
+          Deal Cards & Clash
         </button>
       </div>
     </div>
@@ -433,7 +433,7 @@
       <div class="flex items-center justify-between pb-2 border-b border-emerald-900/60">
         <h3 class="text-base font-bold text-white flex items-center gap-2">
           <i data-lucide="book-open" class="w-5 h-5 text-emerald-400"></i>
-          How to Play (Card Quartet)
+          How to Play (Quartet Clash)
         </h3>
         <button id="closeRulesBtn" class="text-slate-400 hover:text-white">
           <i data-lucide="x" class="w-5 h-5"></i>
@@ -612,31 +612,26 @@
   <!-- Firebase SDK imports -->
   <script type="module">
     import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     window.FirebaseModule = {
       initializeApp,
       getApps,
       getAuth,
       signInAnonymously,
-      onAuthStateChanged,
       getFirestore,
       doc,
       getDoc,
       setDoc,
       updateDoc,
-      onSnapshot,
-      collection
+      onSnapshot
     };
     window.dispatchEvent(new CustomEvent('firebase-modules-ready'));
   </script>
 
   <!-- ================= JAVASCRIPT GAME ENGINE ================= -->
   <script>
-    /* -------------------------------------------------------------
-       AUDIO SYNTHESIZER
-    ------------------------------------------------------------- */
     class SoundEngine {
       constructor() {
         this.ctx = null;
@@ -702,9 +697,6 @@
     }
     const sound = new SoundEngine();
 
-    /* -------------------------------------------------------------
-       THEMES DEFINITION (14 Themes)
-    ------------------------------------------------------------- */
     const THEMES = {
       superheroes: [
         { id: 'iron_knight', name: 'Iron Knight', symbol: '🦾', color: 'from-amber-600 to-red-700', border: 'border-red-500' },
@@ -850,9 +842,6 @@
       return result;
     }
 
-    /* -------------------------------------------------------------
-       FIREBASE BACKEND CONFIGURATION
-    ------------------------------------------------------------- */
     const DEFAULT_FIREBASE_CONFIG = {
       apiKey: "PASTE_YOUR_API_KEY_HERE",
       authDomain: "PASTE_YOUR_AUTH_DOMAIN_HERE",
@@ -862,7 +851,7 @@
       appId: "PASTE_YOUR_APP_ID_HERE"
     };
 
-    const appId = 'card-quartet-game';
+    const appId = 'quartet-clash-game';
     let db = null;
     let auth = null;
     let currentAuthUser = null;
@@ -909,10 +898,7 @@
       initCloudBackend();
     });
 
-    /* -------------------------------------------------------------
-       CARD VAULT
-    ------------------------------------------------------------- */
-    const CARD_CACHE_KEY = 'QUARTET_CARD_CACHE_V3_1';
+    const CARD_CACHE_KEY = 'QUARTET_CLASH_CARD_CACHE_V3_2';
 
     class CardVault {
       constructor() {
@@ -1005,12 +991,9 @@
 
     const cardVault = new CardVault();
 
-    /* -------------------------------------------------------------
-       GAME STATE
-    ------------------------------------------------------------- */
     const state = {
       playerCount: 4,
-      playMode: 'bots', // 'bots', 'passplay', or 'online'
+      playMode: 'bots',
       themeKey: 'animals',
       botDelay: 800,
       roundNumber: 1,
@@ -1039,11 +1022,7 @@
       }, 2200);
     }
 
-    /* -------------------------------------------------------------
-       SETUP & EVENT LISTENERS
-    ------------------------------------------------------------- */
     function setupEventListeners() {
-      // Player count selector
       document.querySelectorAll('.player-count-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           document.querySelectorAll('.player-count-btn').forEach(b => {
@@ -1056,7 +1035,6 @@
         });
       });
 
-      // Play style change
       document.querySelectorAll('input[name="playMode"]').forEach(radio => {
         radio.addEventListener('change', (e) => {
           state.playMode = e.target.value;
@@ -1073,7 +1051,6 @@
         });
       });
 
-      // Submit Setup
       document.getElementById('startGameSubmit').addEventListener('click', () => {
         state.botDelay = parseInt(document.getElementById('botSpeedSelect').value, 10);
         state.themeKey = document.getElementById('cardThemeSelect').value;
@@ -1082,7 +1059,6 @@
         startNewRound();
       });
 
-      // Header Buttons
       document.getElementById('newGameHeaderBtn').addEventListener('click', () => {
         clearTimeout(state.botTimer);
         document.getElementById('setupModal').classList.remove('hidden');
@@ -1100,7 +1076,6 @@
         document.getElementById('rulesModal').classList.add('hidden');
       });
 
-      // Card Vault Modal
       document.getElementById('cardVaultHeaderBtn').addEventListener('click', openCardVaultModal);
       document.getElementById('closeVaultBtn').addEventListener('click', () => {
         document.getElementById('cardVaultModal').classList.add('hidden');
@@ -1115,13 +1090,11 @@
         updateStatusToast(`Regenerated cards for ${theme}!`);
       });
 
-      // Scoreboard Modal
       document.getElementById('viewScoresBtn').addEventListener('click', openScoreboard);
       document.getElementById('closeScoreboardBtn').addEventListener('click', () => {
         document.getElementById('scoreboardModal').classList.add('hidden');
       });
 
-      // Next Round from Win Modal
       document.getElementById('nextRoundBtn').addEventListener('click', () => {
         document.getElementById('roundEndModal').classList.add('hidden');
         if (state.playMode === 'online' && currentOnlineRoomId) {
@@ -1137,13 +1110,11 @@
         }
       });
 
-      // Quit Match from Win Modal
       document.getElementById('quitMatchBtn').addEventListener('click', async () => {
         document.getElementById('roundEndModal').classList.add('hidden');
         await performLeaveGame();
       });
 
-      // Leave Game Header & Modal Handlers
       document.getElementById('leaveGameHeaderBtn').addEventListener('click', () => {
         const subText = document.getElementById('leaveModalSubText');
         if (state.playMode === 'online' && currentOnlineRoomId) {
@@ -1164,20 +1135,17 @@
         await performLeaveGame();
       });
 
-      // Pass & Play Ready Button
       document.getElementById('readyRevealHandBtn').addEventListener('click', () => {
         document.getElementById('passAndPlayModal').classList.add('hidden');
         renderUI();
         triggerTurnFlow();
       });
 
-      // Pass Action Button (Primary passing mechanism)
       const passBtn = document.getElementById('passSelectedCardBtn');
       passBtn.addEventListener('click', () => {
         handlePassButtonClick();
       });
 
-      // Online Multiplayer Lobby Listeners
       document.getElementById('onlineLobbyHeaderBtn').addEventListener('click', openOnlineLobby);
       document.getElementById('closeOnlineLobbyBtn').addEventListener('click', () => {
         document.getElementById('onlineLobbyModal').classList.add('hidden');
@@ -1222,9 +1190,6 @@
       executePass(state.selectedCardId);
     }
 
-    /* -------------------------------------------------------------
-       ONLINE MULTIPLAYER ENGINE
-    ------------------------------------------------------------- */
     function openOnlineLobby() {
       const nameInput = document.getElementById('onlinePlayerNameInput');
       if (nameInput && (!nameInput.value || nameInput.value === 'Player')) {
@@ -1657,15 +1622,13 @@
 
     function finishOnlineRoundShowcase(winnerInfo) {
       sound.playWin();
-      try {
-        confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 } });
-      } catch (e) {}
+      try { confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 } }); } catch (e) {}
 
-      const winner = state.players[winnerInfo.winnerSeat];
       const modal = document.getElementById('roundEndModal');
       document.getElementById('winnerTitleText').textContent = `${winnerInfo.winnerName} Wins the Round!`;
       document.getElementById('winnerSubText').textContent = `Assembled all 4 cards of the set!`;
 
+      const winner = state.players[winnerInfo.winnerSeat];
       const showcase = document.getElementById('winningHandShowcase');
       showcase.innerHTML = '';
       const winCards = winner?.hand.filter(c => c.kindId === winnerInfo.winKindId).slice(0, 4) || [];
@@ -1706,9 +1669,6 @@
       lucide.createIcons();
     }
 
-    /* -------------------------------------------------------------
-       CORE ROUND INITIALIZATION
-    ------------------------------------------------------------- */
     function resetMatchScores() {
       state.scores = {};
       for (let i = 0; i < state.playerCount; i++) {
@@ -1746,7 +1706,6 @@
         });
       }
 
-      // Check if dealt a winning 4 of a kind right away
       for (let i = 0; i < state.playerCount; i++) {
         if (checkFourOfAKind(state.players[i].hand)) {
           finishRound(i);
@@ -1754,7 +1713,6 @@
         }
       }
 
-      // Pre-select first card for active human dealer
       const activeIdx = getActiveViewPlayerIndex();
       if (state.turnIndex === activeIdx && state.players[activeIdx]?.hand.length > 0) {
         state.selectedCardId = state.players[activeIdx].hand[0].id;
@@ -1764,9 +1722,6 @@
       triggerTurnFlow();
     }
 
-    /* -------------------------------------------------------------
-       CARD VAULT UI
-    ------------------------------------------------------------- */
     function openCardVaultModal() {
       const select = document.getElementById('vaultThemeFilter');
       select.innerHTML = '';
@@ -1807,9 +1762,6 @@
       });
     }
 
-    /* -------------------------------------------------------------
-       TURN MECHANICS & PASSING
-    ------------------------------------------------------------- */
     function triggerTurnFlow() {
       if (!state.isRoundActive) return;
 
@@ -1879,7 +1831,6 @@
         state.selectedCardId = null;
         state.isPassInProgress = false;
 
-        // Check if the receiving player now has 4 of a kind
         const winKind = checkFourOfAKind(toPlayer.hand);
         if (winKind) {
           clearTimeout(state.botTimer);
@@ -1889,7 +1840,6 @@
 
         state.turnIndex = nextIndex;
 
-        // Auto-select first card for next active player if human
         const nextActiveIdx = getActiveViewPlayerIndex();
         if (state.turnIndex === nextActiveIdx && state.players[nextActiveIdx]?.hand.length > 0) {
           state.selectedCardId = state.players[nextActiveIdx].hand[0].id;
@@ -1909,7 +1859,6 @@
       const bot = state.players[botIndex];
       if (!bot || bot.hand.length === 0) return;
 
-      // Before passing, check if bot already holds 4 of a kind
       const currentWin = checkFourOfAKind(bot.hand);
       if (currentWin) {
         clearTimeout(state.botTimer);
@@ -1946,7 +1895,7 @@
         <div class="w-24 h-36 rounded-2xl bg-gradient-to-br from-emerald-800 via-teal-900 to-slate-950 border-2 border-amber-400/80 shadow-2xl flex flex-col items-center justify-between p-2 text-center">
           <div class="text-[10px] font-bold text-amber-300 uppercase tracking-widest">Secret Pass</div>
           <div class="w-12 h-12 rounded-xl bg-emerald-950/80 border border-emerald-400/40 flex items-center justify-center text-2xl text-emerald-300">
-            🂠
+            ⚡
           </div>
           <div class="text-[9px] text-emerald-200/90 font-mono">${fromName} ➔ ${toName}</div>
         </div>
@@ -2023,9 +1972,6 @@
       return 0;
     }
 
-    /* -------------------------------------------------------------
-       SCORING & WIN DECLARATION
-    ------------------------------------------------------------- */
     function finishRound(winnerIdx) {
       state.isRoundActive = false;
       state.isPassInProgress = false;
@@ -2047,7 +1993,7 @@
 
       const winKindId = checkFourOfAKind(winner.hand) || (winner.hand[0] ? winner.hand[0].kindId : null);
       const fullTheme = THEMES[state.themeKey] || THEMES.animals;
-      const winKindObj = fullTheme.find(k => k.id === winKindId) || (winner.hand[0] || { name: 'Quartet Set', symbol: '🂠' });
+      const winKindObj = fullTheme.find(k => k.id === winKindId) || (winner.hand[0] || { name: 'Quartet Set', symbol: '⚡' });
 
       const roundSummary = [];
       state.players.forEach((p) => {
@@ -2113,7 +2059,6 @@
       nextBtn.textContent = 'Next Round (Dealer Shifts ➔)';
       nextBtn.disabled = false;
 
-      // Close other conflicting overlays and reveal modal reliably
       document.getElementById('passFlightOverlay').classList.add('hidden');
       document.getElementById('passAndPlayModal').classList.add('hidden');
       modal.classList.remove('hidden');
@@ -2162,9 +2107,6 @@
       lucide.createIcons();
     }
 
-    /* -------------------------------------------------------------
-       UI RENDERING
-    ------------------------------------------------------------- */
     function renderUI() {
       const viewingIdx = getActiveViewPlayerIndex();
       const viewingPlayer = state.players[viewingIdx];
@@ -2231,7 +2173,7 @@
           <div class="flex items-center -space-x-3 my-1">
             ${Array(p.hand.length).fill(0).map(() => `
               <div class="w-8 h-12 rounded-lg bg-gradient-to-br from-emerald-800 to-emerald-950 border border-emerald-500/50 shadow-md flex items-center justify-center text-[10px] text-emerald-300/60 font-mono">
-                🂠
+                ⚡
               </div>
             `).join('')}
           </div>
@@ -2405,13 +2347,9 @@
       return el;
     }
 
-    /* -------------------------------------------------------------
-       BOOTSTRAP APPLICATION
-    ------------------------------------------------------------- */
     window.onload = function() {
       setupEventListeners();
       resetMatchScores();
-      // Show setup modal on startup instead of auto-starting
       document.getElementById('setupModal').classList.remove('hidden');
       lucide.createIcons();
     };
