@@ -327,6 +327,8 @@
         <div>
           <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">Card Theme</label>
           <select id="cardThemeSelect" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500">
+            <option value="alphabet">🔤 Alphabets (A-F)</option>
+            <option value="numbers">🔢 Numbers (1-6)</option>
             <option value="superheroes">🦸‍♂️ Superheroes</option>
             <option value="mythology">🐉 Mythical Creatures</option>
             <option value="landmarks">🏛️ World Landmarks</option>
@@ -582,6 +584,8 @@
           <div class="flex items-center justify-between text-xs">
             <span class="text-slate-400">Theme:</span>
             <select id="onlineThemeSelect" class="bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white focus:outline-none">
+              <option value="alphabet">Alphabets (A-F)</option>
+              <option value="numbers">Numbers (1-6)</option>
               <option value="superheroes">Superheroes</option>
               <option value="mythology">Mythical Creatures</option>
               <option value="landmarks">World Landmarks</option>
@@ -708,6 +712,22 @@
     const sound = new SoundEngine();
 
     const THEMES = {
+      alphabet: [
+        { id: 'alpha_a', name: 'Letter A', symbol: '🅰️', color: 'from-blue-600 to-indigo-800', border: 'border-blue-400' },
+        { id: 'alpha_b', name: 'Letter B', symbol: '🅱️', color: 'from-emerald-600 to-teal-800', border: 'border-emerald-400' },
+        { id: 'alpha_c', name: 'Letter C', symbol: '🅲', color: 'from-amber-600 to-orange-700', border: 'border-amber-400' },
+        { id: 'alpha_d', name: 'Letter D', symbol: '🅳', color: 'from-purple-600 to-indigo-700', border: 'border-purple-400' },
+        { id: 'alpha_e', name: 'Letter E', symbol: '🅴', color: 'from-rose-600 to-red-800', border: 'border-rose-400' },
+        { id: 'alpha_f', name: 'Letter F', symbol: '🅵', color: 'from-cyan-600 to-blue-900', border: 'border-cyan-400' }
+      ],
+      numbers: [
+        { id: 'num_1', name: 'Number One', symbol: '1️⃣', color: 'from-amber-500 to-yellow-600', border: 'border-amber-400' },
+        { id: 'num_2', name: 'Number Two', symbol: '2️⃣', color: 'from-blue-500 to-indigo-700', border: 'border-blue-400' },
+        { id: 'num_3', name: 'Number Three', symbol: '3️⃣', color: 'from-emerald-500 to-teal-700', border: 'border-emerald-400' },
+        { id: 'num_4', name: 'Number Four', symbol: '4️⃣', color: 'from-purple-500 to-pink-700', border: 'border-purple-400' },
+        { id: 'num_5', name: 'Number Five', symbol: '5️⃣', color: 'from-rose-500 to-red-700', border: 'border-rose-400' },
+        { id: 'num_6', name: 'Number Six', symbol: '6️⃣', color: 'from-teal-500 to-cyan-800', border: 'border-teal-400' }
+      ],
       superheroes: [
         { id: 'iron_knight', name: 'Iron Knight', symbol: '🦾', color: 'from-amber-600 to-red-700', border: 'border-red-500' },
         { id: 'thunder_god', name: 'Thunder God', symbol: '⚡', color: 'from-yellow-400 to-amber-600', border: 'border-yellow-400' },
@@ -852,7 +872,6 @@
       return result;
     }
 
-    // Fetch and display total global game completions on startup
     async function fetchTotalGamesPlayed() {
       try {
         const res = await fetch('https://api.counterapi.dev/v1/project-hub-games/quartet-clash');
@@ -866,7 +885,6 @@
       } catch (e) {}
     }
 
-    // Increment completed game count when a round finishes with a winner
     function incrementCompletedGameCount() {
       fetch('https://api.counterapi.dev/v1/project-hub-games/quartet-clash/up')
         .then(res => res.json())
