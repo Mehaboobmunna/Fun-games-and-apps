@@ -113,9 +113,9 @@
 <body class="min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 relative">
 
     <div class="w-full max-w-2xl">
-        <!-- Navigation Button matching requested hub style -->
+        <!-- Navigation Button matching Hub style -->
         <nav class="top-nav">
-            <a href="../" onclick="goBackToMain(event)">&larr; Back to Apps Hub</a>
+            <a href="../">&larr; Back to Apps Hub</a>
         </nav>
 
         <div class="glass-card shadow-2xl overflow-hidden">
@@ -124,7 +124,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <h1 class="text-2xl font-bold tracking-tight">Drawing Series Builder</h1>
-                        <p class="text-blue-200 text-sm mt-1">Upload PDF drawing files to group sequential numbers into clean, hyphenated ranges.</p>
+                        <p class="text-blue-200 text-sm mt-1">Upload PDF drawing files to group sequential numbers into clean ranges.</p>
                     </div>
                     <div class="bg-white/10 p-3 rounded-xl backdrop-blur-md hidden sm:block">
                         <svg class="w-8 h-8 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
@@ -142,18 +142,18 @@
                             <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
                         </div>
                         <div class="text-base font-semibold text-slate-200">Drop PDF drawing files here, or <span class="text-blue-400 underline">browse PDF files</span></div>
-                        <p class="text-xs text-slate-400">Only .pdf drawing formats with numbering in filenames will be processed.</p>
+                        <p class="text-xs text-slate-400">Only .pdf drawing formats will be processed.</p>
                     </div>
                 </div>
 
-                <!-- Uploaded Files Summary / Badge List -->
+                <!-- Uploaded Files Summary (Quantity Only) -->
                 <div id="files-summary-container" class="hidden">
-                    <div class="flex justify-between items-center mb-2">
-                        <label class="block text-sm font-semibold text-slate-300" id="uploaded-count-label">Uploaded PDF Files (0)</label>
+                    <div class="flex justify-between items-center glass-input px-4 py-3">
+                        <div class="flex items-center space-x-2.5">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                            <span class="text-sm font-semibold text-slate-200" id="uploaded-count-label">Uploaded PDF Files: 0</span>
+                        </div>
                         <button onclick="clearFiles()" class="text-xs text-rose-400 font-medium hover:underline">Clear All</button>
-                    </div>
-                    <div id="files-badge-list" class="flex flex-wrap gap-2 max-h-36 overflow-y-auto p-3 glass-input text-xs">
-                        <!-- Dynamic badges here -->
                     </div>
                 </div>
 
@@ -192,7 +192,7 @@
 
             <!-- Footer Info -->
             <div class="bg-slate-950/40 px-6 py-3 border-t border-slate-800/60 text-xs text-slate-400 flex justify-between items-center backdrop-blur-md">
-                <span>Drawing Series Builder v1.3</span>
+                <span>Drawing Series Builder v1.15</span>
                 <span id="stats-info">Ready</span>
             </div>
         </div>
@@ -207,25 +207,12 @@
     <script>
         let currentFilenames = [];
 
-        // Load default example files on start to demonstrate utility matching user's prompt request
         window.onload = function() {
-            currentFilenames = [
-                "C1000.pdf", "C1001.pdf", "C1002.pdf", "C1003.pdf", "C1004.pdf",
-                "C1008.pdf", "C1009.pdf", "C1010.pdf", "C1015.pdf", "C1016.pdf",
-                "C1029.pdf", "C1030.pdf", "C1031.pdf", "C1032.pdf", "C1044.pdf",
-                "C1051.pdf", "C1062.pdf"
-            ];
+            currentFilenames = [];
             updateFilesView();
-            buildSeries();
+            document.getElementById('output-string').value = "";
+            document.getElementById('stats-info').innerText = "Ready";
         };
-
-        function goBackToMain(e) {
-            e.preventDefault();
-            showToast('Navigating back to main portal...');
-            setTimeout(() => {
-                window.location.reload();
-            }, 600);
-        }
 
         function handleFilesSelect(files) {
             if (!files || files.length === 0) return;
@@ -241,167 +228,316 @@
             updateFilesView();
             buildSeries();
             showToast(`${pdfFiles.length} PDF file(s) added successfully!`);
+            document.getElementById('file-input').value = '';
         }
 
         function clearFiles() {
             currentFilenames = [];
             updateFilesView();
-            buildSeries();
+            document.getElementById('output-string').value = "";
+            document.getElementById('stats-info').innerText = "Ready";
             showToast('Cleared all files');
+            document.getElementById('file-input').value = '';
         }
 
         function updateFilesView() {
             const container = document.getElementById('files-summary-container');
-            const badgeList = document.getElementById('files-badge-list');
             const countLabel = document.getElementById('uploaded-count-label');
 
             if (currentFilenames.length === 0) {
                 container.classList.add('hidden');
-                badgeList.innerHTML = '';
                 return;
             }
 
             container.classList.remove('hidden');
-            countLabel.innerText = `Uploaded PDF Files (${currentFilenames.length})`;
-            
-            badgeList.innerHTML = currentFilenames.map((name, idx) => `
-                <span class="bg-blue-950/60 text-blue-300 border border-blue-800/40 px-2.5 py-1 rounded-md font-medium flex items-center space-x-1.5 backdrop-blur-sm">
-                    <span>${name}</span>
-                    <button onclick="removeFile(${idx})" class="text-blue-400 hover:text-rose-400 ml-1 font-bold">&times;</button>
-                </span>
-            `).join('');
-        }
-
-        function removeFile(index) {
-            currentFilenames.splice(index, 1);
-            updateFilesView();
-            buildSeries();
+            countLabel.innerText = `Uploaded PDF Files: ${currentFilenames.length}`;
         }
 
         function parseItem(item) {
-            item = item.trim();
+            item = (item || '').trim();
             if (!item) return null;
             
-            const stripExt = document.getElementById('strip-ext').checked;
-            if (stripExt) {
-                item = item.replace(/\.[^/.]+$/, "");
+            const originalName = item;
+            // Always strip .pdf / file extensions for internal structural parsing
+            const baseItem = item.replace(/\.pdf$/i, "").replace(/\.[^/.]+$/, "").trim();
+
+            // 1. Check if it's a pre-built range like HR5000-HR5029_A (second part MUST have prefix letters)
+            const rangeMatch = baseItem.match(/^([A-Za-z]+)(\d+)\s*-\s*([A-Za-z]+)(\d+)(.*)$/);
+            if (rangeMatch) {
+                const prefix1 = rangeMatch[1];
+                const num1 = parseInt(rangeMatch[2], 10);
+                const num2 = parseInt(rangeMatch[4], 10);
+                const remainder = (rangeMatch[5] || '').trim();
+                const revMatch = remainder.match(/^_([A-Za-z0-9]+)$/);
+                const revision = revMatch ? revMatch[1] : '';
+
+                return {
+                    original: originalName,
+                    cleanName: baseItem,
+                    isPrebuiltRange: true,
+                    prefix: prefix1,
+                    num: num1,
+                    endNum: num2,
+                    padding: rangeMatch[2].length,
+                    sheetNum: null,
+                    revision: revision
+                };
             }
 
-            // Match optional prefix letters/symbols followed by numbers
-            const match = item.match(/^([A-Za-z_-]*?)(\d+)$/);
+            // 2. Standard filename pattern matching:
+            // Part 1: Prefix (Alphabets)
+            // Part 2: 4-digit number (or general digits)
+            // Part 3: Optional sheet number e.g. " - 1", "-1", " - 2"
+            // Part 4: Optional Revision e.g. "_A", "_B", "_0"
+            const match = baseItem.match(/^([A-Za-z]+)(\d+)(?:\s*-\s*(\d+))?(?:_([A-Za-z0-9]+))?$/);
+            
             if (match) {
                 const prefix = match[1];
                 const numStr = match[2];
+                const sheetStr = match[3];
+                const revision = match[4] || '';
+
                 return {
-                    original: item,
+                    original: originalName,
+                    cleanName: baseItem,
+                    isPrebuiltRange: false,
                     prefix: prefix,
                     num: parseInt(numStr, 10),
-                    padding: numStr.length
+                    padding: numStr.length,
+                    sheetNum: sheetStr !== undefined ? parseInt(sheetStr, 10) : null,
+                    revision: revision
                 };
             } else {
                 return {
-                    original: item,
+                    original: originalName,
+                    cleanName: baseItem,
+                    isPrebuiltRange: false,
                     prefix: '',
                     num: NaN,
-                    padding: 0
+                    padding: 0,
+                    sheetNum: null,
+                    revision: ''
                 };
             }
         }
 
+        function formatSingleItem(item, stripExt) {
+            if (isNaN(item.num)) {
+                return stripExt ? item.cleanName : item.original;
+            }
+            const numPart = String(item.num).padStart(item.padding, '0');
+            const sheetPart = (item.sheetNum !== null && item.sheetNum > 0) ? ` - ${item.sheetNum}` : '';
+            const revPart = item.revision ? `_${item.revision}` : '';
+            const extPart = (!stripExt && item.original.toLowerCase().endsWith('.pdf')) ? '.pdf' : '';
+            return `${item.prefix}${numPart}${sheetPart}${revPart}${extPart}`;
+        }
+
         function buildSeries() {
+            if (currentFilenames.length === 0) {
+                document.getElementById('output-string').value = "";
+                document.getElementById('stats-info').innerText = "Ready";
+                return;
+            }
+
             const sortOutput = document.getElementById('sort-output').checked;
             const removeDuplicates = document.getElementById('remove-duplicates').checked;
+            const stripExt = document.getElementById('strip-ext').checked;
 
-            let items = [];
+            let rawItems = [];
             for (let name of currentFilenames) {
-                const parsed = parseItem(name);
-                if (parsed) {
-                    items.push(parsed);
+                // Support comma-separated lists if a user uploads or tests batch names
+                const parts = name.split(',').map(s => s.trim()).filter(Boolean);
+                for (let part of parts) {
+                    const parsed = parseItem(part);
+                    if (parsed) {
+                        rawItems.push(parsed);
+                    }
                 }
             }
 
-            if (items.length === 0) {
+            if (rawItems.length === 0) {
                 document.getElementById('output-string').value = "";
                 document.getElementById('stats-info').innerText = "0 files processed";
                 return;
             }
 
-            const groups = {};
-            const unparsable = [];
-
-            items.forEach(item => {
-                if (isNaN(item.num)) {
-                    unparsable.push(item.original);
-                } else {
-                    const key = item.prefix;
-                    if (!groups[key]) groups[key] = [];
-                    groups[key].push(item);
-                }
-            });
-
-            let resultParts = [];
-
-            Object.keys(groups).forEach(prefix => {
-                let groupItems = groups[prefix];
-
-                if (removeDuplicates) {
-                    const seen = new Set();
-                    groupItems = groupItems.filter(item => {
-                        const identifier = item.prefix + item.num;
-                        if (seen.has(identifier)) return false;
-                        seen.add(identifier);
-                        return true;
-                    });
-                }
-
-                if (sortOutput) {
-                    groupItems.sort((a, b) => a.num - b.num);
-                }
-
-                if (groupItems.length > 0) {
-                    let rangeStart = groupItems[0];
-                    let rangeEnd = groupItems[0];
-
-                    for (let i = 1; i < groupItems.length; i++) {
-                        const current = groupItems[i];
-                        if (current.num === rangeEnd.num + 1 && current.padding === rangeEnd.padding) {
-                            rangeEnd = current;
-                        } else {
-                            resultParts.push(formatRange(rangeStart, rangeEnd));
-                            rangeStart = current;
-                            rangeEnd = current;
-                        }
+            // Expand prebuilt ranges into individual items for evaluation and sorting
+            let expandedItems = [];
+            rawItems.forEach(item => {
+                if (item.isPrebuiltRange) {
+                    const extSuffix = item.original.toLowerCase().endsWith('.pdf') ? '.pdf' : '';
+                    for (let n = item.num; n <= item.endNum; n++) {
+                        const base = item.prefix + String(n).padStart(item.padding, '0') + (item.revision ? '_' + item.revision : '');
+                        expandedItems.push({
+                            original: base + extSuffix,
+                            cleanName: base,
+                            isPrebuiltRange: false,
+                            prefix: item.prefix,
+                            num: n,
+                            padding: item.padding,
+                            sheetNum: null,
+                            revision: item.revision
+                        });
                     }
-                    resultParts.push(formatRange(rangeStart, rangeEnd));
+                } else {
+                    expandedItems.push(item);
                 }
             });
 
-            if (unparsable.length > 0) {
-                const uniqueUnparsable = removeDuplicates ? [...new Set(unparsable)] : unparsable;
-                resultParts.push(...uniqueUnparsable);
+            // Identify base numbers that have sub-sheets (e.g. -1, -2) for any prefix + num combo.
+            // Rule: If a sub-sheet (sheetNum > 0) is found, both it and its main sheet (sheetNum === null) must NOT be grouped.
+            const subSheetBaseMap = {}; // key: "prefix|num" -> boolean
+            expandedItems.forEach(item => {
+                if (!isNaN(item.num) && item.sheetNum !== null && item.sheetNum > 0) {
+                    const baseKey = `${item.prefix.toUpperCase()}|${item.num}`;
+                    subSheetBaseMap[baseKey] = true;
+
+                    // Ensure corresponding main sheet is present if it came from a range or was implied
+                    const mainSheetExists = expandedItems.some(ex =>
+                        ex.prefix.toUpperCase() === item.prefix.toUpperCase() &&
+                        ex.num === item.num &&
+                        ex.sheetNum === null &&
+                        ex.revision === item.revision
+                    );
+                    if (!mainSheetExists) {
+                        const extSuffix = item.original.toLowerCase().endsWith('.pdf') ? '.pdf' : '';
+                        const base = item.prefix + String(item.num).padStart(item.padding, '0') + (item.revision ? '_' + item.revision : '');
+                        expandedItems.push({
+                            original: base + extSuffix,
+                            cleanName: base,
+                            isPrebuiltRange: false,
+                            prefix: item.prefix,
+                            num: item.num,
+                            padding: item.padding,
+                            sheetNum: null,
+                            revision: item.revision
+                        });
+                    }
+                }
+            });
+
+            // Deduplicate items based on canonical structure (prefix, number, sheetNum, revision)
+            if (removeDuplicates) {
+                const seen = new Set();
+                expandedItems = expandedItems.filter(item => {
+                    const key = isNaN(item.num)
+                        ? item.cleanName
+                        : `${item.prefix.toUpperCase()}|${item.num}|${item.sheetNum === null ? 0 : item.sheetNum}|${item.revision}`;
+                    if (seen.has(key)) return false;
+                    seen.add(key);
+                    return true;
+                });
             }
 
-            const finalOutput = resultParts.join(', ');
-            document.getElementById('output-string').value = finalOutput;
-            document.getElementById('stats-info').innerText = `Processed ${items.length} files into ${resultParts.length} tokens/ranges`;
-        }
+            const compareFn = (a, b) => {
+                if (!a || !b) return 0;
+                const prefixA = (a.prefix || '').toUpperCase();
+                const prefixB = (b.prefix || '').toUpperCase();
+                // 1. Sort by alphanumeric prefix first (alphabetical)
+                if (prefixA !== prefixB) return prefixA.localeCompare(prefixB);
+                
+                // 2. Sort by 4-digit number succeeding the alphanumeric character
+                const numA = isNaN(a.num) ? 0 : a.num;
+                const numB = isNaN(b.num) ? 0 : b.num;
+                if (numA !== numB) return numA - numB;
 
-        function formatRange(startItem, endItem) {
-            const formatNum = (num, padding) => {
-                return String(num).padStart(padding, '0');
+                // 3. Additional sheets ordering (main sheet 0 comes before -1, -2)
+                const sheetA = a.sheetNum !== null ? a.sheetNum : 0;
+                const sheetB = b.sheetNum !== null ? b.sheetNum : 0;
+                if (sheetA !== sheetB) return sheetA - sheetB;
+
+                // 4. Revision ordering
+                const revA = a.revision || '';
+                const revB = b.revision || '';
+                return revA.localeCompare(revB);
             };
 
-            if (startItem.num === endItem.num) {
-                return startItem.prefix + formatNum(startItem.num, startItem.padding);
-            } else if (endItem.num === startItem.num + 1) {
-                return startItem.prefix + formatNum(startItem.num, startItem.padding) + ', ' + endItem.prefix + formatNum(endItem.num, endItem.padding);
-            } else {
-                return startItem.prefix + formatNum(startItem.num, startItem.padding) + '-' + endItem.prefix + formatNum(endItem.num, endItem.padding);
+            if (sortOutput) {
+                expandedItems.sort(compareFn);
             }
+
+            // Build ranges linearly in sorted order so 2 consecutive numbers stay comma-separated
+            // and 3+ consecutive groupable numbers form a hyphenated range
+            let outputTokens = [];
+            let i = 0;
+
+            const isGroupable = (item) => {
+                if (!item || isNaN(item.num)) return false;
+                if (item.sheetNum !== null) return false;
+                const baseKey = `${item.prefix.toUpperCase()}|${item.num}`;
+                if (subSheetBaseMap[baseKey]) return false;
+                return true;
+            };
+
+            while (i < expandedItems.length) {
+                const current = expandedItems[i];
+
+                if (!isGroupable(current)) {
+                    outputTokens.push({
+                        text: formatSingleItem(current, stripExt),
+                        sortRef: current
+                    });
+                    i++;
+                } else {
+                    // Find how many consecutive groupable items share the same prefix, revision, and padding
+                    let j = i;
+                    while (j + 1 < expandedItems.length) {
+                        const nextItem = expandedItems[j + 1];
+                        const prevItem = expandedItems[j];
+                        if (
+                            isGroupable(nextItem) &&
+                            nextItem.prefix.toUpperCase() === current.prefix.toUpperCase() &&
+                            nextItem.revision === current.revision &&
+                            nextItem.padding === current.padding &&
+                            nextItem.num === prevItem.num + 1
+                        ) {
+                            j++;
+                        } else {
+                            break;
+                        }
+                    }
+
+                    const runLength = j - i + 1;
+                    if (runLength >= 3) {
+                        // 3 or more consecutive numbers -> Hyphenated range
+                        const startItem = expandedItems[i];
+                        const endItem = expandedItems[j];
+                        const startNumStr = String(startItem.num).padStart(startItem.padding, '0');
+                        const endNumStr = String(endItem.num).padStart(endItem.padding, '0');
+                        const revPart = startItem.revision ? `_${startItem.revision}` : '';
+                        const extPart = (!stripExt && startItem.original.toLowerCase().endsWith('.pdf')) ? '.pdf' : '';
+                        outputTokens.push({
+                            text: `${startItem.prefix}${startNumStr}-${endItem.prefix}${endNumStr}${revPart}${extPart}`,
+                            sortRef: startItem
+                        });
+                    } else {
+                        // 1 or 2 consecutive numbers -> Keep comma-separated as individual tokens
+                        for (let k = i; k <= j; k++) {
+                            outputTokens.push({
+                                text: formatSingleItem(expandedItems[k], stripExt),
+                                sortRef: expandedItems[k]
+                            });
+                        }
+                    }
+                    i = j + 1;
+                }
+            }
+
+            if (sortOutput) {
+                outputTokens.sort((a, b) => compareFn(a.sortRef, b.sortRef));
+            }
+
+            const finalOutput = outputTokens.map(t => t.text).join(', ');
+            document.getElementById('output-string').value = finalOutput;
+            document.getElementById('stats-info').innerText = `Processed ${currentFilenames.length} files into ${outputTokens.length} tokens/ranges`;
         }
 
         function copyOutput() {
             const outputBox = document.getElementById('output-string');
+            if (!outputBox.value.trim()) {
+                showToast('Nothing to copy yet!');
+                return;
+            }
             outputBox.select();
             
             try {
