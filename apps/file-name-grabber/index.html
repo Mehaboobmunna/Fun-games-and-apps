@@ -1,674 +1,411 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>File Name Grabber</title>
-    <!-- FontAwesome for Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-          /* Surfaces & Backgrounds */
-          --bg: #090d16;
-          --card-bg: #111726;
-          --card-hover: #172033;
-          --card-active: #1e293b;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>File Name Grabber</title>
+  <style>
+    :root {
+      /* Surfaces & Backgrounds */
+      --bg: #090d16;
+      --card-bg: #111726;
+      --card-hover: #172033;
+      --card-active: #1e293b;
 
-          /* Borders & Dividers */
-          --border: #1e293b;
-          --border-focus: #3b82f6;
+      /* Borders & Dividers */
+      --border: #1e293b;
+      --border-focus: #3b82f6;
 
-          /* Typography */
-          --text: #f1f5f9;
-          --text-muted: #64748b;
+      /* Typography */
+      --text: #f1f5f9;
+      --text-muted: #64748b;
 
-          /* Primary Brand Accents */
-          --accent: #2563eb;
-          --accent-hover: #1d4ed8;
-          --accent-light: #60a5fa;
+      /* Primary Brand Accents */
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --accent-light: #60a5fa;
 
-          /* Semantic Alerts */
-          --success: #10b981;
-          --warning: #f59e0b;
-          --danger: #ef4444;
+      /* Semantic Alerts */
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
 
-          /* Geometry & Typography System */
-          --radius: 8px;
-          --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-          --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        }
+      /* Geometry & Typography System */
+      --radius: 8px;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-        body {
-            background-color: var(--bg);
-            color: var(--text);
-            font-family: var(--font-sans);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 1.5rem;
+    }
 
-        /* Main Container */
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 32px 20px;
-            width: 100%;
-            flex-grow: 1;
-            display: grid;
-            grid-template-columns: 1fr 1.2fr;
-            gap: 24px;
-        }
+    /* Top Navigation bar */
+    .top-nav {
+      max-width: 800px;
+      width: 100%;
+      margin: 0 auto 1.5rem auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      font-size: 0.9rem;
+    }
 
-        @media (max-width: 768px) {
-            .container {
-                grid-template-columns: 1fr;
-            }
-        }
+    .top-nav a {
+      color: var(--text-muted);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: color 0.2s ease;
+    }
 
-        /* Card Elements */
-        .card {
-            background-color: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
+    .top-nav a:hover {
+      color: var(--text);
+    }
 
-        .card-title {
-            font-size: 14px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--text-muted);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
+    .nav-links {
+      display: flex;
+      gap: 1.25rem;
+      flex-wrap: wrap;
+    }
 
-        /* Drag & Drop Upload Zone */
-        .drop-zone {
-            border: 2px dashed var(--border);
-            border-radius: var(--radius);
-            padding: 32px 16px;
-            text-align: center;
-            cursor: pointer;
-            background-color: var(--card-bg);
-            transition: all 0.2s ease;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 180px;
-        }
+    .container {
+      max-width: 800px;
+      width: 100%;
+      margin: 0 auto;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+    }
 
-        .drop-zone:hover, .drop-zone.dragover {
-            border-color: var(--border-focus);
-            background-color: var(--card-hover);
-        }
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+      color: var(--text);
+    }
 
-        .drop-zone input[type="file"] {
-            position: absolute;
-            inset: 0;
-            opacity: 0;
-            cursor: pointer;
-            width: 100%;
-            height: 100%;
-        }
+    p.subtitle {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-bottom: 1.5rem;
+    }
 
-        .upload-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            background-color: rgba(37, 99, 235, 0.1);
-            color: var(--accent-light);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            margin-bottom: 12px;
-        }
+    /* Drop Zone / File Input */
+    .drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 2.5rem 1.5rem;
+      text-align: center;
+      background: var(--bg);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-bottom: 1.5rem;
+    }
 
-        /* Form Controls & Settings */
-        .setting-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            font-size: 14px;
-            color: var(--text);
-        }
+    .drop-zone:hover, .drop-zone.dragover {
+      border-color: var(--border-focus);
+      background: var(--card-hover);
+    }
 
-        .setting-row + .setting-row {
-            padding-top: 12px;
-            border-top: 1px solid var(--border);
-        }
+    .drop-zone p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-top: 0.5rem;
+    }
 
-        /* Custom Toggle Switch */
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 44px;
-            height: 24px;
-        }
+    .drop-zone strong {
+      color: var(--accent-light);
+    }
 
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
+    input[type="file"] {
+      display: none;
+    }
 
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            inset: 0;
-            background-color: var(--card-active);
-            transition: .2s;
-            border-radius: 24px;
-            border: 1px solid var(--border);
-        }
+    /* Controls */
+    .controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
 
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 16px;
-            width: 16px;
-            left: 3px;
-            bottom: 3px;
-            background-color: var(--text-muted);
-            transition: .2s;
-            border-radius: 50%;
-        }
+    .toggle-label {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      cursor: pointer;
+      font-size: 0.9rem;
+      color: var(--text);
+      user-select: none;
+    }
 
-        input:checked + .slider {
-            background-color: var(--accent);
-            border-color: var(--accent);
-        }
+    /* Custom Switch */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
 
-        input:checked + .slider:before {
-            transform: translateX(20px);
-            background-color: white;
-        }
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
 
-        /* Select Input */
-        select {
-            background-color: var(--card-active);
-            color: var(--text);
-            border: 1px solid var(--border);
-            padding: 6px 12px;
-            border-radius: var(--radius);
-            font-size: 13px;
-            outline: none;
-            cursor: pointer;
-        }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: var(--border);
+      transition: .2s;
+      border-radius: 24px;
+    }
 
-        select:focus {
-            border-color: var(--border-focus);
-        }
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .2s;
+      border-radius: 50%;
+    }
 
-        /* Textarea / Output */
-        textarea {
-            width: 100%;
-            background-color: var(--bg);
-            color: var(--text);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 12px;
-            font-family: var(--font-mono);
-            font-size: 13px;
-            resize: none;
-            outline: none;
-            height: 90px;
-        }
+    input:checked + .slider {
+      background-color: var(--accent);
+    }
 
-        textarea:focus {
-            border-color: var(--border-focus);
-        }
+    input:focus + .slider {
+      box-shadow: 0 0 1px var(--border-focus);
+    }
 
-        /* Buttons */
-        .btn {
-            background-color: var(--accent);
-            color: white;
-            border: none;
-            border-radius: var(--radius);
-            padding: 8px 16px;
-            font-size: 13px;
-            font-weight: 500;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            transition: background-color 0.2s;
-        }
+    input:checked + .slider:before {
+      transform: translateX(20px);
+    }
 
-        .btn:hover {
-            background-color: var(--accent-hover);
-        }
+    .file-count {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
 
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
+    /* Output Section */
+    .output-section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
 
-        .btn-danger {
-            background-color: transparent;
-            color: var(--danger);
-            border: 1px solid var(--border);
-        }
+    .output-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
 
-        .btn-danger:hover:not(:disabled) {
-            background-color: rgba(239, 68, 68, 0.1);
-            border-color: var(--danger);
-        }
+    .output-header label {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text);
+    }
 
-        .btn-group {
-            display: flex;
-            gap: 8px;
-            justify-content: flex-end;
-        }
+    textarea {
+      width: 100%;
+      height: 140px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      padding: 0.85rem;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
 
-        /* File List Area */
-        .file-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            max-height: 240px;
-            overflow-y: auto;
-            padding-right: 4px;
-        }
+    textarea:focus {
+      border-color: var(--border-focus);
+    }
 
-        .file-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background-color: var(--card-active);
-            border: 1px solid var(--border);
-            padding: 8px 12px;
-            border-radius: var(--radius);
-            font-size: 13px;
-        }
+    .btn {
+      background-color: var(--accent);
+      color: white;
+      border: none;
+      border-radius: var(--radius);
+      padding: 0.6rem 1.25rem;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+      align-self: flex-start;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
 
-        .file-item span.name {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 220px;
-        }
+    .btn:hover {
+      background-color: var(--accent-hover);
+    }
 
-        .file-item button {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            cursor: pointer;
-            padding: 4px;
-            border-radius: 4px;
-            transition: color 0.2s;
-        }
-
-        .file-item button:hover {
-            color: var(--danger);
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 32px 0;
-            color: var(--text-muted);
-            font-size: 13px;
-        }
-
-        /* Toast notification */
-        .toast {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            background-color: var(--card-bg);
-            border: 1px solid var(--border);
-            color: var(--text);
-            padding: 12px 18px;
-            border-radius: var(--radius);
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 13px;
-            transform: translateY(100px);
-            opacity: 0;
-            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            z-index: 100;
-        }
-
-        .toast.show {
-            transform: translateY(0);
-            opacity: 1;
-        }
-
-        .toast i {
-            color: var(--success);
-        }
-
-        /* Footer */
-        footer {
-            border-top: 1px solid var(--border);
-            padding: 16px;
-            text-align: center;
-            font-size: 12px;
-            color: var(--text-muted);
-            background-color: var(--card-bg);
-        }
-    </style>
+    .btn.success {
+      background-color: var(--success);
+    }
+  </style>
 </head>
 <body>
 
-    <!-- Top Navigation with Back Button matching Pulse style -->
-    <nav class="top-nav" style="padding: 16px 24px; border-bottom: 1px solid var(--border); background: var(--card-bg);">
-      <a href="../" style="color: var(--text-muted); text-decoration: none; font-family: var(--font-sans); font-size: 14px; display: inline-flex; align-items: center; gap: 6px; transition: color 0.2s;" onmouseover="this.style.color='var(--text)'" onmouseout="this.style.color='var(--text-muted)'">&larr; Back to Apps Hub</a>
-    </nav>
+  <!-- Top Navigation with Home & Page Links -->
+  <nav class="top-nav">
+    <a href="../">&larr; Back to Home</a>
+    <div class="nav-links">
+      <a href="../games/">🎮 Games</a>
+      <a href="../apps/">⚡ Apps</a>
+      <a href="../wallpaper/">🖼️ Wallpapers</a>
+      <a href="../blog/">📝 Blog</a>
+    </div>
+  </nav>
 
-    <!-- Main Application Container -->
-    <main class="container">
-        
-        <!-- Left Column: Upload & Settings -->
-        <div style="display: flex; flex-direction: column; gap: 20px;">
-            
-            <!-- Drag & Drop Card -->
-            <div class="card">
-                <div class="card-title">
-                    <i class="fa-solid fa-cloud-arrow-up" style="color: var(--accent-light);"></i> Upload Files
-                </div>
-                <div id="dropZone" class="drop-zone">
-                    <input type="file" id="fileInput" multiple aria-label="Upload files">
-                    <div class="upload-icon">
-                        <i class="fa-solid fa-folder-open"></i>
-                    </div>
-                    <p style="font-weight: 500; font-size: 14px; margin-bottom: 4px;">Drag & Drop files here</p>
-                    <p style="font-size: 12px; color: var(--text-muted);">or click to browse from device</p>
-                </div>
-            </div>
+  <div class="container">
+    <h1>File Name Grabber</h1>
+    <p class="subtitle">Drop or select files to instantly generate a sorted, comma-separated list of filenames.</p>
 
-            <!-- Settings Card -->
-            <div class="card">
-                <div class="card-title">
-                    <i class="fa-solid fa-sliders" style="color: var(--accent-light);"></i> Configuration
-                </div>
-                
-                <!-- Include Filename Extension Toggle (OFF by default) -->
-                <div class="setting-row">
-                    <span>Include filename extension</span>
-                    <label class="switch">
-                        <input type="checkbox" id="extensionToggle">
-                        <span class="slider"></span>
-                    </label>
-                </div>
-
-                <!-- Delimiter Selection -->
-                <div class="setting-row">
-                    <span>Delimiter</span>
-                    <select id="delimiterSelect">
-                        <option value=", " selected>Comma (, )</option>
-                        <option value="; ">Semicolon (; )</option>
-                        <option value=" | ">Pipe ( | )</option>
-                        <option value="\n">New Line</option>
-                    </select>
-                </div>
-            </div>
-
-        </div>
-
-        <!-- Right Column: Output & File List -->
-        <div style="display: flex; flex-direction: column; gap: 20px;">
-            
-            <!-- Output String Card -->
-            <div class="card">
-                <div class="card-title" style="justify-content: space-between;">
-                    <span style="display: flex; align-items: center; gap: 8px;">
-                        <i class="fa-solid fa-code" style="color: var(--accent-light);"></i> Concatenated Output
-                    </span>
-                    <span id="charCount" style="font-size: 11px; color: var(--text-muted); font-weight: normal; text-transform: none;">0 chars</span>
-                </div>
-                
-                <textarea id="outputString" readonly placeholder="Parsed and sorted filenames will appear here..."></textarea>
-
-                <div class="btn-group">
-                    <button id="clearAllBtn" class="btn btn-danger" disabled>
-                        <i class="fa-solid fa-trash-can"></i> Clear
-                    </button>
-                    <button id="copyBtn" class="btn" disabled>
-                        <i class="fa-solid fa-copy"></i> Copy to Clipboard
-                    </button>
-                </div>
-            </div>
-
-            <!-- File List Preview Card -->
-            <div class="card" style="flex-grow: 1;">
-                <div class="card-title" style="justify-content: space-between;">
-                    <span style="display: flex; align-items: center; gap: 8px;">
-                        <i class="fa-solid fa-list-ul" style="color: var(--accent-light);"></i> Parsed Files
-                    </span>
-                    <span id="fileCountBadge" style="background: var(--card-active); padding: 2px 8px; border-radius: 12px; font-size: 11px; color: var(--text-muted);">0 items</span>
-                </div>
-
-                <div id="emptyState" class="empty-state">
-                    No files uploaded yet. Select or drop files to begin.
-                </div>
-
-                <div id="fileListContainer" class="file-list" style="display: none;">
-                    <!-- Dynamic file items injected here -->
-                </div>
-            </div>
-
-        </div>
-
-    </main>
-
-    <!-- Toast Notification -->
-    <div id="toast" class="toast">
-        <i class="fa-solid fa-circle-check"></i>
-        <span id="toastMessage">Copied to clipboard successfully!</span>
+    <!-- Drop Zone -->
+    <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+      <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--accent-light); margin: 0 auto 0.5rem auto; display: block;">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+      </svg>
+      <p>Drag & drop files here, or <strong>browse files</strong></p>
+      <input type="file" id="fileInput" multiple>
     </div>
 
-    <!-- Footer -->
-    <footer>
-        File Name Grabber &bull; Built with Pulse Theme Design System
-    </footer>
+    <!-- Controls -->
+    <div class="controls">
+      <label class="toggle-label">
+        <span class="switch">
+          <!-- Default unchecked (off) -->
+          <input type="checkbox" id="includeExtToggle" onchange="processFiles()">
+          <span class="slider"></span>
+        </span>
+        Include filename extension
+      </label>
+      <div class="file-count" id="fileCount">0 files loaded</div>
+    </div>
 
-    <!-- JavaScript Application Logic -->
-    <script>
-        // State
-        let filesArray = [];
-        let includeExtension = false; // OFF by default
-        let currentDelimiter = ", ";
+    <!-- Output -->
+    <div class="output-section">
+      <div class="output-header">
+        <label for="outputResult">Concatenated Result</label>
+        <button class="btn" id="copyBtn" onclick="copyResult()">Copy to Clipboard</button>
+      </div>
+      <textarea id="outputResult" readonly placeholder="Sorted file names will appear here..."></textarea>
+    </div>
+  </div>
 
-        // DOM elements
-        const dropZone = document.getElementById('dropZone');
-        const fileInput = document.getElementById('fileInput');
-        const extensionToggle = document.getElementById('extensionToggle');
-        const delimiterSelect = document.getElementById('delimiterSelect');
-        const outputString = document.getElementById('outputString');
-        const charCount = document.getElementById('charCount');
-        const clearAllBtn = document.getElementById('clearAllBtn');
-        const copyBtn = document.getElementById('copyBtn');
-        const fileCountBadge = document.getElementById('fileCountBadge');
-        const emptyState = document.getElementById('emptyState');
-        const fileListContainer = document.getElementById('fileListContainer');
-        const toast = document.getElementById('toast');
-        const toastMessage = document.getElementById('toastMessage');
+  <script>
+    let loadedFiles = [];
 
-        // Initialize checkbox state matching variable
-        extensionToggle.checked = includeExtension;
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const includeExtToggle = document.getElementById('includeExtToggle');
+    const outputResult = document.getElementById('outputResult');
+    const fileCount = document.getElementById('fileCount');
+    const copyBtn = document.getElementById('copyBtn');
 
-        // File input change handler
-        fileInput.addEventListener('change', (e) => {
-            handleFiles(e.target.files);
-            fileInput.value = ''; // Reset so same files can be chosen again if needed
-        });
+    // Drag and drop events
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+      }, false);
+    });
 
-        // Drag & Drop visual feedback
-        ['dragenter', 'dragover'].forEach(eventName => {
-            dropZone.addEventListener(eventName, (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                dropZone.classList.add('dragover');
-            }, false);
-        });
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+      }, false);
+    });
 
-        ['dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                dropZone.classList.remove('dragover');
-            }, false);
-        });
+    dropZone.addEventListener('drop', (e) => {
+      const dt = e.dataTransfer;
+      const files = dt.files;
+      handleFiles(files);
+    });
 
-        dropZone.addEventListener('drop', (e) => {
-            const droppedFiles = e.dataTransfer.files;
-            handleFiles(droppedFiles);
-        });
+    fileInput.addEventListener('change', (e) => {
+      handleFiles(e.target.files);
+    });
 
-        // Add files to state avoiding exact duplicates
-        function handleFiles(newFiles) {
-            for (let i = 0; i < newFiles.length; i++) {
-                const file = newFiles[i];
-                const exists = filesArray.some(f => f.name === file.name && f.size === file.size);
-                if (!exists) {
-                    filesArray.push(file);
-                }
-            }
-            updateApp();
+    function handleFiles(files) {
+      if (!files || files.length === 0) return;
+      loadedFiles = Array.from(files);
+      processFiles();
+    }
+
+    function processFiles() {
+      if (loadedFiles.length === 0) {
+        outputResult.value = '';
+        fileCount.textContent = '0 files loaded';
+        return;
+      }
+
+      const includeExt = includeExtToggle.checked;
+
+      // Extract names
+      let names = loadedFiles.map(file => {
+        let fullName = file.name;
+        if (!includeExt) {
+          const lastDotIndex = fullName.lastIndexOf('.');
+          if (lastDotIndex > 0) {
+            return fullName.substring(0, lastDotIndex);
+          }
         }
+        return fullName;
+      });
 
-        // Remove single file
-        window.removeFile = function(index) {
-            filesArray.splice(index, 1);
-            updateApp();
-        };
+      // Sort alphabetically (case-insensitive & natural numeric sorting)
+      names.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'accent', numeric: true }));
 
-        // Clear all files
-        clearAllBtn.addEventListener('click', () => {
-            filesArray = [];
-            updateApp();
-            showToast('All files cleared');
-        });
+      // Join with comma and space
+      outputResult.value = names.join(', ');
+      fileCount.textContent = `${loadedFiles.length} file${loadedFiles.length === 1 ? '' : 's'} loaded`;
+    }
 
-        // Settings change listeners
-        extensionToggle.addEventListener('change', (e) => {
-            includeExtension = e.target.checked;
-            updateApp();
-        });
-
-        delimiterSelect.addEventListener('change', (e) => {
-            currentDelimiter = e.target.value === '\\n' ? '\n' : e.target.value;
-            updateApp();
-        });
-
-        // Helper to format filename based on extension toggle
-        function formatFilename(name) {
-            if (!includeExtension) {
-                const lastDot = name.lastIndexOf('.');
-                return lastDot !== -1 ? name.substring(0, lastDot) : name;
-            }
-            return name;
-        }
-
-        // Main update pipeline
-        function updateApp() {
-            // Sort files alphabetically by formatted filename (case-insensitive)
-            filesArray.sort((a, b) => {
-                const nameA = formatFilename(a.name).toLowerCase();
-                const nameB = formatFilename(b.name).toLowerCase();
-                if (nameA < nameB) return -1;
-                if (nameA > nameB) return 1;
-                return 0;
-            });
-
-            const count = filesArray.length;
-            fileCountBadge.textContent = `${count} item${count === 1 ? '' : 's'}`;
-            
-            const hasItems = count > 0;
-            clearAllBtn.disabled = !hasItems;
-            copyBtn.disabled = !hasItems;
-
-            if (!hasItems) {
-                emptyState.style.display = 'block';
-                fileListContainer.style.display = 'none';
-                fileListContainer.innerHTML = '';
-                outputString.value = '';
-                charCount.textContent = '0 chars';
-                return;
-            }
-
-            emptyState.style.display = 'none';
-            fileListContainer.style.display = 'flex';
-
-            let listHTML = '';
-            let formattedNames = [];
-
-            filesArray.forEach((file, index) => {
-                const displayName = formatFilename(file.name);
-                formattedNames.push(displayName);
-
-                listHTML += `
-                    <div class="file-item">
-                        <span class="name" title="${file.name}">${displayName}</span>
-                        <button onclick="removeFile(${index})" title="Remove">
-                            <i class="fa-solid fa-xmark"></i>
-                        </button>
-                    </div>
-                `;
-            });
-
-            fileListContainer.innerHTML = listHTML;
-
-            // Generate concatenated output string
-            const resultString = formattedNames.join(currentDelimiter);
-            outputString.value = resultString;
-            charCount.textContent = `${resultString.length} char${resultString.length === 1 ? '' : 's'}`;
-        }
-
-        // Copy to clipboard functionality with fallback
-        copyBtn.addEventListener('click', () => {
-            const text = outputString.value;
-            if (!text) return;
-
-            outputString.select();
-            outputString.setSelectionRange(0, 99999);
-
-            try {
-                const success = document.execCommand('copy');
-                if (success) {
-                    showToast('Filenames copied to clipboard!');
-                } else {
-                    navigator.clipboard.writeText(text).then(() => {
-                        showToast('Filenames copied to clipboard!');
-                    }).catch(() => {
-                        showToast('Failed to copy text', 'fa-solid fa-triangle-exclamation');
-                    });
-                }
-            } catch (err) {
-                showToast('Failed to copy text', 'fa-solid fa-triangle-exclamation');
-            }
-        });
-
-        // Toast notification trigger
-        let toastTimer;
-        function showToast(message, iconClass = 'fa-solid fa-circle-check') {
-            toastMessage.textContent = message;
-            toast.querySelector('i').className = iconClass;
-            toast.classList.add('show');
-
-            clearTimeout(toastTimer);
-            toastTimer = setTimeout(() => {
-                toast.classList.remove('show');
-            }, 3000);
-        }
-    </script>
+    function copyResult() {
+      if (!outputResult.value) return;
+      navigator.clipboard.writeText(outputResult.value).then(() => {
+        const originalText = copyBtn.innerHTML;
+        copyBtn.innerHTML = 'Copied!';
+        copyBtn.classList.add('success');
+        setTimeout(() => {
+          copyBtn.innerHTML = originalText;
+          copyBtn.classList.remove('success');
+        }, 2000);
+      });
+    }
+  </script>
 </body>
 </html>
