@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Curated Wallpapers | GitHub Pages</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Fonts & Lucide Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Inter', sans-serif; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
+        ::-webkit-scrollbar-thumb { background: rgba(100, 116, 139, 0.5); border-radius: 9999px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.8); }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+        .dark .glass-panel {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen flex flex-col transition-colors duration-300">
+
+    <!-- Top Site Navigation Bar -->
+    <header class="sticky top-0 z-40 w-full glass-panel border-b border-slate-200 dark:border-slate-800 transition-colors">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+            
+            <!-- Brand / Logo -->
+            <a href="../" class="flex items-center gap-2.5 font-bold text-lg sm:text-xl tracking-tight group">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-600 to-pink-500 flex items-center justify-center text-white shadow-md shadow-brand-500/20 group-hover:scale-105 transition-transform">
+                    <i data-lucide="image" class="w-5 h-5"></i>
+                </div>
+                <span>Canvas<span class="text-brand-500">Vault</span></span>
+            </a>
+
+            <!-- Central Section Navigation Links (Matches your 4 tabs) -->
+            <nav class="hidden md:flex items-center gap-1 text-sm font-medium">
+                <a href="../games/" class="px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition">Games</a>
+                <a href="../apps/" class="px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition">Apps</a>
+                <a href="../blog/" class="px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition">Blog</a>
+                <a href="./" class="px-3 py-1.5 rounded-lg bg-brand-50 dark:bg-brand-950/60 text-brand-600 dark:text-brand-400 font-semibold border border-brand-200/50 dark:border-brand-800/50">Wallpapers</a>
+            </nav>
+
+            <!-- Search Bar in Header -->
+            <div class="hidden lg:flex flex-1 max-w-xs relative mx-2">
+                <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <i data-lucide="search" class="w-4 h-4"></i>
+                </span>
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    placeholder="Search 10 categories, tags..." 
+                    class="w-full pl-9 pr-4 py-1.5 text-xs bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full focus:outline-none focus:ring-2 focus:ring-brand-500 text-slate-800 dark:text-slate-100"
+                >
+            </div>
+
+            <!-- Header Actions -->
+            <div class="flex items-center gap-2 sm:gap-3">
+                <button 
+                    id="favoritesFilterBtn"
+                    title="View Saved Favorites" 
+                    class="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800/80 transition-colors relative"
+                    onclick="toggleFavoritesFilter()"
+                >
+                    <i data-lucide="heart" class="w-5 h-5"></i>
+                    <span id="favBadge" class="hidden absolute top-1 right-1 w-2.5 h-2.5 bg-rose-500 rounded-full"></span>
+                </button>
+
+                <button 
+                    id="themeToggleBtn" 
+                    title="Toggle Theme" 
+                    class="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800/80 transition-colors"
+                    onclick="toggleTheme()"
+                >
+                    <i data-lucide="sun" class="w-5 h-5 dark:hidden"></i>
+                    <i data-lucide="moon" class="w-5 h-5 hidden dark:block"></i>
+                </button>
+
+                <a 
+                    href="https://github.com" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 hover:opacity-90 font-medium text-xs transition-all shadow-sm"
+                >
+                    <i data-lucide="github" class="w-4 h-4"></i>
+                    <span class="hidden sm:inline">GitHub</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Mobile Search Bar Row -->
+        <div class="lg:hidden px-4 pb-3">
+            <div class="relative w-full">
+                <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <i data-lucide="search" class="w-4 h-4"></i>
+                </span>
+                <input 
+                    type="text" 
+                    id="mobileSearchInput" 
+                    placeholder="Search 10 categories, tags, 4K..." 
+                    class="w-full pl-9 pr-4 py-1.5 text-xs bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full focus:outline-none focus:ring-2 focus:ring-brand-500 text-slate-800 dark:text-slate-100"
+                >
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        
+        <!-- Hero Section -->
+        <section class="text-center py-4 sm:py-8 max-w-3xl mx-auto">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold uppercase tracking-wider rounded-full bg-brand-50 dark:bg-brand-950/60 text-brand-600 dark:text-brand-400 border border-brand-200 dark:border-brand-800 mb-3">
+                <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Curated Gallery
+            </span>
+            <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
+                Wallpapers Across <span class="bg-gradient-to-r from-brand-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">10 Visual Themes</span>
+            </h1>
+            <p class="mt-3 text-sm sm:text-base text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
+                Explore hand-selected 4K, Ultrawide, and Mobile lock screen art across gaming, cinema, minimal workspaces, and vehicles.
+            </p>
+        </section>
+
+        <!-- Category & Filter Controls -->
+        <section class="space-y-4">
+            <!-- 10 Category Horizontal Scroll Pills -->
+            <div class="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar" id="categoryList">
+                <!-- Injected via JavaScript -->
+            </div>
+
+            <!-- Device Orientation & Sort Options -->
+            <div class="flex flex-wrap items-center justify-between gap-3 text-xs sm:text-sm pt-2 border-t border-slate-200/80 dark:border-slate-800/80">
+                <div class="flex items-center gap-2">
+                    <span class="text-slate-500 font-medium">Device:</span>
+                    <button class="filter-device active px-2.5 py-1 rounded-lg bg-slate-200 dark:bg-slate-800 font-medium transition-colors" data-device="all">All</button>
+                    <button class="filter-device px-2.5 py-1 rounded-lg hover:bg-slate-200/70 dark:hover:bg-slate-800 font-medium transition-colors text-slate-600 dark:text-slate-400" data-device="desktop">Desktop (16:9)</button>
+                    <button class="filter-device px-2.5 py-1 rounded-lg hover:bg-slate-200/70 dark:hover:bg-slate-800 font-medium transition-colors text-slate-600 dark:text-slate-400" data-device="mobile">Mobile (9:16)</button>
+                    <button class="filter-device px-2.5 py-1 rounded-lg hover:bg-slate-200/70 dark:hover:bg-slate-800 font-medium transition-colors text-slate-600 dark:text-slate-400" data-device="ultrawide">Ultrawide (21:9)</button>
+                </div>
+
+                <div class="flex items-center gap-2 ml-auto">
+                    <span class="text-slate-500 font-medium">Sort by:</span>
+                    <select id="sortSelect" class="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-brand-500">
+                        <option value="newest">Featured & Newest</option>
+                        <option value="popular">Most Popular</option>
+                        <option value="name">Alphabetical</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <!-- Wallpaper Grid -->
+        <section>
+            <div class="flex items-center justify-between mb-4 text-xs sm:text-sm text-slate-500">
+                <span id="resultsCount">Showing 0 wallpapers</span>
+                <button id="clearFiltersBtn" class="hidden text-brand-600 dark:text-brand-400 hover:underline flex items-center gap-1" onclick="resetFilters()">
+                    <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Reset filters
+                </button>
+            </div>
+
+            <!-- Responsive Masonry Grid -->
+            <div id="wallpaperGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <!-- Injected via JavaScript -->
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="hidden flex-col items-center justify-center py-20 text-center space-y-3">
+                <div class="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-900 flex items-center justify-center text-slate-400">
+                    <i data-lucide="image-off" class="w-8 h-8"></i>
+                </div>
+                <h3 class="text-base font-semibold">No wallpapers found</h3>
+                <p class="text-xs text-slate-500 max-w-xs">Try selecting another category or resetting your query.</p>
+                <button onclick="resetFilters()" class="px-4 py-2 mt-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-semibold shadow">
+                    Show All Wallpapers
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-auto border-t border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-950 py-8 text-center text-xs text-slate-500">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p>Integrated with GitHub Pages. Powered by HTML5, Tailwind CSS & open photography.</p>
+            <a href="#top" class="hover:text-brand-500 transition-colors flex items-center gap-1">
+                <i data-lucide="arrow-up" class="w-3.5 h-3.5"></i> Back to Top
+            </a>
+        </div>
+    </footer>
+
+    <!-- Wallpaper Modal Dialog -->
+    <div id="wallpaperModal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 transition-all opacity-0">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-4xl w-full max-h-[92vh] flex flex-col overflow-hidden shadow-2xl relative">
+            
+            <div class="flex items-center justify-between px-5 py-3.5 border-b border-slate-200 dark:border-slate-800">
+                <div class="flex items-center gap-2">
+                    <h3 id="modalTitle" class="font-bold text-base sm:text-lg truncate">Wallpaper Details</h3>
+                    <span id="modalResBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">4K</span>
+                </div>
+                <button onclick="closeModal()" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col items-center">
+                <div class="w-full relative rounded-xl overflow-hidden shadow-inner bg-slate-950 flex items-center justify-center max-h-[55vh]">
+                    <img id="modalImage" src="" alt="Preview" class="w-full h-auto max-h-[55vh] object-contain">
+                    <div class="absolute bottom-3 right-3 bg-slate-900/70 backdrop-blur px-3 py-1 rounded-md text-[11px] text-white flex items-center gap-1.5">
+                        <i data-lucide="monitor" class="w-3.5 h-3.5"></i>
+                        <span id="modalDims">3840 x 2160</span>
+                    </div>
+                </div>
+
+                <div class="w-full mt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div>
+                        <p class="text-xs text-slate-500">Category & Author</p>
+                        <p id="modalAuthor" class="text-sm font-semibold text-slate-800 dark:text-slate-200">Photographer</p>
+                    </div>
+                    <div class="flex items-center gap-1.5" id="modalPalette"></div>
+                    <div id="modalTags" class="flex flex-wrap gap-1.5 max-w-xs justify-end"></div>
+                </div>
+            </div>
+
+            <div class="px-5 py-3.5 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-900/50">
+                <button id="modalFavBtn" class="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 transition">
+                    <i data-lucide="heart" class="w-4 h-4 text-rose-500"></i>
+                    <span>Favorites</span>
+                </button>
+
+                <div class="flex items-center gap-2">
+                    <button onclick="copyWallpaperUrl()" class="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-medium rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                        <i data-lucide="copy" class="w-4 h-4"></i>
+                        <span>Copy Link</span>
+                    </button>
+                    <a id="downloadLinkBtn" href="#" target="_blank" download="wallpaper.jpg" class="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-xl bg-brand-600 hover:bg-brand-700 text-white shadow transition">
+                        <i data-lucide="download" class="w-4 h-4"></i>
+                        <span>Download High-Res</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-6 right-6 z-50 hidden transform transition-all duration-300 translate-y-3 bg-slate-900 text-white text-xs px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2 border border-slate-800">
+        <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
+        <span id="toastMsg">Action completed</span>
+    </div>
+
+    <!-- Application Script -->
+    <script>
+        // Curated Top 10 Wallpapers Database
+        const WALLPAPERS = [
+            // 1. Vehicles
+            {
+                id: 'wp-veh-1',
+                title: 'Urban Hypercar Night Rain',
+                category: 'Vehicles',
+                device: 'desktop',
+                resolution: '3840 x 2160',
+                aspect: '16:9',
+                views: 29400,
+                author: 'Adrian N',
+                url: 'https://images.unsplash.com/photo-1542282088-72c9c27ed0cd?q=80&w=2000&auto=format&fit=crop',
+                downloadUrl: 'https://images.unsplash.com/photo-1542282088-72c9c27ed0cd?q=85&w=3840&auto=format&fit=crop',
+                tags: ['vehicles', 'supercar', 'audi', 'night', 'rain'],
+                palette: ['#0f172a', '#e11d48', '#475569', '#f8fafc']
+            },
+            {
+                id: 'wp-veh-2',
+                title: 'Vintage Classic Muscle Coupe',
+                category: 'Vehicles',
+                device: 'mobile',
+                resolution: '1440 x 3200',
+                aspect: '9:16',
+                views: 21300,
+                author: 'Campbell',
+                url: 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?q=80&w=1200&auto=format&fit=crop',
+                downloadUrl: 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?q=85&w=1440&auto=format&fit=crop',
+                tags: ['vehicles', 'vintage', 'muscle', 'classic', 'mobile'],
+                palette: ['#18181b', '#3b82f6', '#71717a', '#f4f4f5']
+            },
+            // 2. Entertainment
+            {
+                id: 'wp-ent-1',
+                title: 'Neon Stage Concert Crowd',
+                category: 'Entertainment',
+                device: 'desktop',
+                resolution: '3840 x 2160',
+                aspect: '16:9',
+                views: 34100,
+                author: 'Anthony DELANOIX',
+                url: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=2000&auto=format&fit=crop',
+                downloadUrl: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=85&w=3840&auto=format&fit=crop',
+                tags: ['entertainment', 'music', 'concert', 'crowd', 'stage', 'lights'],
+                palette: ['#030712', '#7c3aed', '#ec4899', '#f59e0b']
+            },
+            {
+                id: 'wp-ent-2',
+                title: 'Retro Film Noir Cinema',
+                category: 'Entertainment',
+                device: 'mobile',
+                resolution: '1440 x 3200',
+                aspect: '9:16',
+                views: 18500,
+                author: 'Kilyan Sockalingum',
+                url: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=1200&auto=format&fit=crop',
+                downloadUrl: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=85&w=1440&auto=format&fit=crop',
+                tags: ['entertainment', 'cinema', 'theater', 'movies', 'film'],
+                palette: ['#0f172a', '#991b1b', '#e2e8f0', '#7f1d1d']
+            },
+            // 3. Minimal
+            {
+                id: 'wp-min-1',
+                title: 'Desert Dune Curves & Shadow',
+                category: 'Minimal',
+                device: 'mobile',
+                resolution: '1440 x 3200',
+                aspect: '9:16',
+                views: 19800,
+                author: 'Lars Eberle',
+                url: 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?q=80&w=1200&auto=format&fit=crop',
+                downloadUrl: 'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?q=85&w=1440&auto=format&fit=crop',
+                tags: ['minimal', 'sand', 'dune', 'clean', 'shadows'],
+                palette: ['#78350f', '#d97706', '#fef3c7', '#451a03']
+            },
+            {
+                id: 'wp-min-2',
+                title: 'Monochrome Facade Lines',
+                category: 'Minimal',
+                device: 'desktop',
+                resolution: '3840 x 2160',
+                aspect: '16:9',
+                views: 26800,
+                author: 'Simone Hutsch',
+                url: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?q=80&w=2000&auto=format&fit=crop',
+                downloadUrl: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?q=85&w=3840&auto=format&fit=crop',
+                tags: ['minimal', 'geometry', 'monochrome', 'architecture'],
+                palette: ['#0f172a', '#475569', '#94a3b8', '#f8fafc']
+            },
+            // 4. Nature
+            {
+                id: 'wp-nat-1',
+                title: 'Alpine Mist & Mountain Ridge',
+                category: 'Nature',
+                device: 'desktop',
+                resolution: '3840 x 2160',
+                aspect: '16:9',
+                views: 42100,
+                author: 'Kalen Emsley',
+                url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=2000&auto=format&fit=crop',
+                downloadUrl: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=85&w=3840&auto=format&fit=crop',
+                tags: ['nature', 'mountains', 'fog', 'forest', 'landscape'],
+                palette: ['#1e293b', '#64748b', '#cbd5e1', '#064e3b']
+            },
+            // 5. Cyberpunk
+            {
+                id: 'wp-cyb-1',
+                title: 'Neon Tokyo Alleyway Reflection',
+                category: 'Cyberpunk',
+                device: 'desktop',
+                resolution: '3840 x 2160',
+                aspect: '16:9',
+                views: 38200,
+                author: 'Sora Shimazaki',
+                url: 'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?q=80&w=2000&auto=format&fit=crop',
+                downloadUrl: 'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?q=85&w=3840&auto=format&fit=crop',
+                tags: ['cyberpunk', 'neon', 'tokyo', 'rain', 'synthwave'],
+                palette: ['#0f172a', '#ec4899', '#6366f1', '#06b6d4']
+            },
+            // 6. Space
+            {
+                id: 'wp-spc-1',
+                title: 'Cosmic Orion Stellar Nursery',
+                category: 'Space',
+                device: 'desktop',
+                resolution: '3840 x 2160',
+                aspect: '16:9',
+                views: 31200,
+                author: 'NASA Hubble',
+                url: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2000&auto=format&fit=crop',
+                downloadUrl: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=85&w=3840&auto=format&fit=crop',
+                tags: ['space', 'galaxy', 'nebula', 'stars', 'astronomy'],
+                palette: ['#030712', '#1e1b4b', '#701a75', '#38bdf8']
+            },
+            // 7. Abstract
+            {
+                id: 'wp-abs-1',
+                title: 'Prismatic Geometric Glass Mesh',
+                category: 'Abstract',
+                device: 'ultrawide',
+                resolution: '5120 x 2160',
+                aspect: '21:9',
+                views: 26100,
+                author: 'Milad Fakurian',
+                url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2000&auto=format&fit=crop',
+                downloadUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=85&w=5120&auto=format&fit=crop',
+                tags: ['abstract', '3d', 'render', 'ultrawide', 'gradient'],
+                palette: ['#312e81', '#9333ea', '#ec4899', '#f43f5e']
+            },
+            // 8. Anime & Illustration
+            {
+                id: 'wp-ani-1',
+                title: 'Lo-Fi Japanese Lantern Lane',
+                category: 'Anime',
+                device: 'mobile',
+                resolution: '1440 x 3200',
+                aspect: '9:16',
+                views: 33900,
+                author: 'Tokyo Story Art',
+                url: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=1200&auto=format&fit=crop',
+                downloadUrl: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?q=85&w=1440&auto=format&fit=crop',
+                tags: ['anime', 'lofi', 'japan', 'illustration', 'night', 'art'],
+                palette: ['#1e1b4b', '#c026d3', '#38bdf8', '#fbbf24']
+            },
+            // 9. Architecture
+            {
+                id: 'wp-arc-1',
+                title: 'Spiral Geometric Architecture Atrium',
+                category: 'Architecture',
+                device: 'desktop',
+                resolution: '3840 x 2160',
+                aspect: '16:9',
+                views: 24700,
+                author: 'Joel Filipe',
+                url: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?q=80&w=2000&auto=format&fit=crop',
+                downloadUrl: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?q=85&w=3840&auto=format&fit=crop',
+                tags: ['architecture', 'spiral', 'building', 'white', 'geometric'],
+                palette: ['#0f172a', '#cbd5e1', '#f8fafc', '#334155']
+            },
+            // 10. Dark & OLED
+            {
+                id: 'wp-oled-1',
+                title: 'Pure Black Lunar Eclipse AMOLED',
+                category: 'Dark / OLED',
+                device: 'mobile',
+                resolution: '1440 x 3200',
+                aspect: '9:16',
+                views: 45200,
+                author: 'Alexander Andrews',
+                url: 'https://images.unsplash.com/photo-1532693322450-2cb5c511067d?q=80&w=1200&auto=format&fit=crop',
+                downloadUrl: 'https://images.unsplash.com/photo-1532693322450-2cb5c511067d?q=85&w=1440&auto=format&fit=crop',
+                tags: ['oled', 'dark', 'black', 'moon', 'amoled', 'space'],
+                palette: ['#000000', '#1c1917', '#e2e8f0', '#94a3b8']
+            }
+        ];
+
+        // 10 Categories List
+        const TOP_10_CATEGORIES = [
+            'Minimal',
+            'Nature',
+            'Cyberpunk',
+            'Space',
+            'Abstract',
+            'Vehicles',
+            'Entertainment',
+            'Anime',
+            'Architecture',
+            'Dark / OLED'
+        ];
+        const categories = ['All', ...TOP_10_CATEGORIES];
+
+        // State Management
+        let selectedCategory = 'All';
+        let selectedDevice = 'all';
+        let searchQuery = '';
+        let sortBy = 'newest';
+        let filterOnlyFavorites = false;
+        let favorites = JSON.parse(localStorage.getItem('fav_wallpapers') || '[]');
+        let activeModalWallpaper = null;
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            renderCategoryTabs();
+            setupEventListeners();
+            applyFilterAndRender();
+            updateFavBadge();
+            lucide.createIcons();
+        });
+
+        function renderCategoryTabs() {
+            const container = document.getElementById('categoryList');
+            container.innerHTML = categories.map(cat => {
+                const isActive = cat === selectedCategory;
+                const activeClass = isActive 
+                    ? 'bg-brand-600 text-white shadow-sm shadow-brand-500/30' 
+                    : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800';
+                
+                return `
+                    <button 
+                        onclick="setCategory('${cat}')" 
+                        class="whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-semibold transition-all ${activeClass}">
+                        ${cat}
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function setCategory(cat) {
+            selectedCategory = cat;
+            renderCategoryTabs();
+            applyFilterAndRender();
+        }
+
+        function setupEventListeners() {
+            const searchInput = document.getElementById('searchInput');
+            const mobileSearchInput = document.getElementById('mobileSearchInput');
+
+            const handleSearch = (e) => {
+                searchQuery = e.target.value.toLowerCase().trim();
+                searchInput.value = e.target.value;
+                mobileSearchInput.value = e.target.value;
+                applyFilterAndRender();
+            };
+
+            searchInput.addEventListener('input', handleSearch);
+            mobileSearchInput.addEventListener('input', handleSearch);
+
+            const deviceBtns = document.querySelectorAll('.filter-device');
+            deviceBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    deviceBtns.forEach(b => {
+                        b.classList.remove('active', 'bg-slate-200', 'dark:bg-slate-800');
+                        b.classList.add('text-slate-600', 'dark:text-slate-400');
+                    });
+                    btn.classList.add('active', 'bg-slate-200', 'dark:bg-slate-800');
+                    btn.classList.remove('text-slate-600', 'dark:text-slate-400');
+                    selectedDevice = btn.dataset.device;
+                    applyFilterAndRender();
+                });
+            });
+
+            document.getElementById('sortSelect').addEventListener('change', (e) => {
+                sortBy = e.target.value;
+                applyFilterAndRender();
+            });
+
+            document.getElementById('wallpaperModal').addEventListener('click', (e) => {
+                if (e.target.id === 'wallpaperModal') closeModal();
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closeModal();
+            });
+        }
+
+        function applyFilterAndRender() {
+            let list = [...WALLPAPERS];
+
+            if (selectedCategory !== 'All') {
+                list = list.filter(w => w.category === selectedCategory);
+            }
+
+            if (selectedDevice !== 'all') {
+                list = list.filter(w => w.device === selectedDevice);
+            }
+
+            if (searchQuery) {
+                list = list.filter(w => 
+                    w.title.toLowerCase().includes(searchQuery) ||
+                    w.category.toLowerCase().includes(searchQuery) ||
+                    w.tags.some(tag => tag.toLowerCase().includes(searchQuery))
+                );
+            }
+
+            if (filterOnlyFavorites) {
+                list = list.filter(w => favorites.includes(w.id));
+            }
+
+            if (sortBy === 'popular') {
+                list.sort((a, b) => b.views - a.views);
+            } else if (sortBy === 'name') {
+                list.sort((a, b) => a.title.localeCompare(b.title));
+            }
+
+            const countElem = document.getElementById('resultsCount');
+            const clearBtn = document.getElementById('clearFiltersBtn');
+            countElem.innerText = `Showing ${list.length} wallpaper${list.length === 1 ? '' : 's'}`;
+
+            if (selectedCategory !== 'All' || selectedDevice !== 'all' || searchQuery || filterOnlyFavorites) {
+                clearBtn.classList.remove('hidden');
+            } else {
+                clearBtn.classList.add('hidden');
+            }
+
+            const grid = document.getElementById('wallpaperGrid');
+            const emptyState = document.getElementById('emptyState');
+
+            if (list.length === 0) {
+                grid.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                emptyState.classList.add('flex');
+            } else {
+                emptyState.classList.add('hidden');
+                emptyState.classList.remove('flex');
+                
+                grid.innerHTML = list.map(item => {
+                    const isFav = favorites.includes(item.id);
+                    const isPortrait = item.device === 'mobile';
+                    return `
+                        <div class="group relative rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col ${isPortrait ? 'row-span-2' : ''}">
+                            <div class="relative overflow-hidden w-full ${isPortrait ? 'aspect-[9/16]' : 'aspect-[16/10]'} bg-slate-950">
+                                <img 
+                                    src="${item.url}" 
+                                    alt="${item.title}" 
+                                    loading="lazy" 
+                                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 cursor-pointer"
+                                    onclick="openModal('${item.id}')"
+                                    onerror="this.src='https://placehold.co/800x600/1e293b/ffffff?text=Wallpaper'"
+                                >
+                                <div class="absolute top-3 left-3 flex items-center gap-1.5 pointer-events-none">
+                                    <span class="px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wider uppercase bg-black/60 backdrop-blur-md text-white border border-white/10">
+                                        ${item.aspect}
+                                    </span>
+                                </div>
+                                <button 
+                                    onclick="toggleFavorite(event, '${item.id}')" 
+                                    class="absolute top-3 right-3 p-2 rounded-xl bg-black/40 backdrop-blur-md text-white hover:text-rose-500 hover:bg-black/60 transition shadow-md"
+                                    title="Toggle Favorite"
+                                >
+                                    <i data-lucide="heart" class="w-4 h-4 ${isFav ? 'fill-rose-500 text-rose-500' : ''}"></i>
+                                </button>
+                                <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4 pointer-events-none">
+                                    <button 
+                                        onclick="openModal('${item.id}')"
+                                        class="pointer-events-auto w-full py-2 px-3 bg-white/95 dark:bg-slate-900/90 hover:bg-white text-slate-900 dark:text-white rounded-xl text-xs font-semibold backdrop-blur shadow flex items-center justify-center gap-1.5 transition transform translate-y-2 group-hover:translate-y-0"
+                                    >
+                                        <i data-lucide="maximize-2" class="w-3.5 h-3.5"></i>
+                                        Preview & Download
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="p-3.5 flex items-center justify-between">
+                                <div class="overflow-hidden">
+                                    <h4 class="font-semibold text-sm truncate text-slate-800 dark:text-slate-100">${item.title}</h4>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 truncate">${item.category} • ${item.resolution}</p>
+                                </div>
+                                <a 
+                                    href="${item.downloadUrl}" 
+                                    target="_blank" 
+                                    download="${item.title.toLowerCase().replace(/\\s+/g, '-')}.jpg" 
+                                    class="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-brand-600 hover:text-white transition"
+                                    title="Quick Download"
+                                >
+                                    <i data-lucide="arrow-down-to-line" class="w-4 h-4"></i>
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+            lucide.createIcons();
+        }
+
+        function openModal(id) {
+            const item = WALLPAPERS.find(w => w.id === id);
+            if (!item) return;
+
+            activeModalWallpaper = item;
+            const modal = document.getElementById('wallpaperModal');
+            
+            document.getElementById('modalTitle').innerText = item.title;
+            document.getElementById('modalResBadge').innerText = item.aspect;
+            document.getElementById('modalImage').src = item.url;
+            document.getElementById('modalDims').innerText = item.resolution;
+            document.getElementById('modalAuthor').innerText = `${item.category} • by ${item.author}`;
+            document.getElementById('downloadLinkBtn').href = item.downloadUrl;
+
+            updateModalFavButton(item.id);
+
+            const paletteContainer = document.getElementById('modalPalette');
+            paletteContainer.innerHTML = item.palette.map(color => `
+                <div 
+                    class="w-5 h-5 rounded-md cursor-pointer border border-black/10 dark:border-white/10 hover:scale-110 transition" 
+                    style="background-color: ${color};" 
+                    title="Palette: ${color}"
+                    onclick="copyColor('${color}')"
+                ></div>
+            `).join('');
+
+            const tagsContainer = document.getElementById('modalTags');
+            tagsContainer.innerHTML = item.tags.map(tag => `
+                <span class="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                    #${tag}
+                </span>
+            `).join('');
+
+            modal.classList.remove('hidden');
+            setTimeout(() => modal.classList.remove('opacity-0'), 10);
+            document.body.style.overflow = 'hidden';
+            lucide.createIcons();
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('wallpaperModal');
+            modal.classList.add('opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                document.body.style.overflow = '';
+            }, 200);
+            activeModalWallpaper = null;
+        }
+
+        function updateModalFavButton(id) {
+            const isFav = favorites.includes(id);
+            const btn = document.getElementById('modalFavBtn');
+            btn.onclick = () => {
+                toggleFavorite(null, id);
+                updateModalFavButton(id);
+            };
+            btn.innerHTML = `
+                <i data-lucide="heart" class="w-4 h-4 ${isFav ? 'fill-rose-500 text-rose-500' : 'text-slate-400'}"></i>
+                <span>${isFav ? 'In Favorites' : 'Add to Favorites'}</span>
+            `;
+            lucide.createIcons();
+        }
+
+        function toggleFavorite(e, id) {
+            if (e) e.stopPropagation();
+            if (favorites.includes(id)) {
+                favorites = favorites.filter(favId => favId !== id);
+                showToast("Removed from favorites");
+            } else {
+                favorites.push(id);
+                showToast("Saved to favorites!");
+            }
+            localStorage.setItem('fav_wallpapers', JSON.stringify(favorites));
+            updateFavBadge();
+            applyFilterAndRender();
+        }
+
+        function toggleFavoritesFilter() {
+            filterOnlyFavorites = !filterOnlyFavorites;
+            const btn = document.getElementById('favoritesFilterBtn');
+            if (filterOnlyFavorites) {
+                btn.classList.add('bg-rose-50', 'text-rose-600', 'dark:bg-rose-950/40', 'dark:text-rose-400');
+                showToast("Showing favorites only");
+            } else {
+                btn.classList.remove('bg-rose-50', 'text-rose-600', 'dark:bg-rose-950/40', 'dark:text-rose-400');
+            }
+            applyFilterAndRender();
+        }
+
+        function updateFavBadge() {
+            const badge = document.getElementById('favBadge');
+            if (favorites.length > 0) {
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        function copyWallpaperUrl() {
+            if (!activeModalWallpaper) return;
+            copyToClipboard(activeModalWallpaper.downloadUrl);
+            showToast("High-res URL copied to clipboard!");
+        }
+
+        function copyColor(hex) {
+            copyToClipboard(hex);
+            showToast(`Copied color ${hex}`);
+        }
+
+        function copyToClipboard(text) {
+            const temp = document.createElement('textarea');
+            temp.value = text;
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand('copy');
+            document.body.removeChild(temp);
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMsg').innerText = msg;
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.remove('translate-y-3'), 10);
+            setTimeout(() => {
+                toast.classList.add('translate-y-3');
+                setTimeout(() => toast.classList.add('hidden'), 200);
+            }, 2500);
+        }
+
+        function resetFilters() {
+            selectedCategory = 'All';
+            selectedDevice = 'all';
+            searchQuery = '';
+            filterOnlyFavorites = false;
+            document.getElementById('searchInput').value = '';
+            document.getElementById('mobileSearchInput').value = '';
+            document.getElementById('favoritesFilterBtn').classList.remove('bg-rose-50', 'text-rose-600', 'dark:bg-rose-950/40', 'dark:text-rose-400');
+            
+            const deviceBtns = document.querySelectorAll('.filter-device');
+            deviceBtns.forEach((b, i) => {
+                if (i === 0) {
+                    b.classList.add('active', 'bg-slate-200', 'dark:bg-slate-800');
+                    b.classList.remove('text-slate-600', 'dark:text-slate-400');
+                } else {
+                    b.classList.remove('active', 'bg-slate-200', 'dark:bg-slate-800');
+                    b.classList.add('text-slate-600', 'dark:text-slate-400');
+                }
+            });
+
+            renderCategoryTabs();
+            applyFilterAndRender();
+        }
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        if (localStorage.getItem('theme') === 'light') {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+</body>
+</html>
